@@ -1,0 +1,11 @@
+For project registration I need:
+
+Student: full name and student number
+Bachelor Program: 
+Danish title:
+English title:
+ECTS Points of thesis:
+Starting Date:
+ECTS Points during thesis: (how many courses do you take besides the thesis)
+End date: (duration is 9 weeks + 3 weeks per 5 ECTS taken while carrying out the thesis, maximum 18 weeks)
+
