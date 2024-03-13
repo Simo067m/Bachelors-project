@@ -35,7 +35,7 @@ class ptb_xl_dataset:
         self.path_to_dataset = path_to_dataset
         self.sampling_rate = sampling_rate
         self.test_fold = test_fold
-        self.X_train, self.y_train, self.X_test, self.y_test = self.load_data()
+        self.X_train_ecg, self.X_train_text, self.y_train, self.X_test_ecg, self.X_test_text, self.y_test = self.load_data()
 
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -58,7 +58,7 @@ class ptb_xl_dataset:
         Y.scp_codes = Y.scp_codes.apply(lambda x: ast.literal_eval(x))
 
         # Load raw signal data
-        X = self.load_raw_data(Y)
+        X_ecg, X_text = self.load_raw_data(Y)
 
         # Apply diagnostic superclass
         Y['diagnostic_superclass'] = Y.scp_codes.apply(self.aggregate_diagnostic)
@@ -66,13 +66,16 @@ class ptb_xl_dataset:
         # Split data into train and test
         test_fold = 10
         # Train
-        X_train = X[np.where(Y.strat_fold != test_fold)]
+        X_train_ecg = X_ecg[np.where(Y.strat_fold != test_fold)]
+        X_train_text = X_text[np.where(Y.strat_fold != test_fold)]
+        #X_train_text
         y_train = Y[(Y.strat_fold != test_fold)].diagnostic_superclass
         # Test
-        X_test = X[np.where(Y.strat_fold == test_fold)]
+        X_test_ecg = X_ecg[np.where(Y.strat_fold == test_fold)]
+        X_test_text = X_text[np.where(Y.strat_fold == test_fold)]
         y_test = Y[Y.strat_fold == test_fold].diagnostic_superclass
 
-        return X_train, y_train, X_test, y_test
+        return X_train_ecg, X_train_text, y_train, X_test_ecg, X_test_text, y_test
 
     def load_raw_data(self, df : pd.DataFrame):
         """
@@ -82,11 +85,13 @@ class ptb_xl_dataset:
         - df (pandas.DataFrame): The dataset loaded as a pandas DataFrame.
         """
         if self.sampling_rate == 100:
-            data = [wfdb.rdsamp(self.path_to_dataset+f) for f in tqdm(df.filename_lr, desc="Samples")]
+            ecg_data = [wfdb.rdsamp(self.path_to_dataset+f) for f in tqdm(df.filename_lr, desc="Samples")]
+            text_data = np.array([row for row in df.report])
         else:
-            data = [wfdb.rdsamp(self.path_to_dataset+f) for f in df.filename_hr]
-        data = np.array([signal for signal, meta in data])
-        return data
+            ecg_data = [wfdb.rdsamp(self.path_to_dataset+f) for f in df.filename_hr]
+            text_data = [row for row in df.report]
+        ecg_data = np.array([signal for signal, meta in ecg_data])
+        return ecg_data, text_data
     
     def aggregate_diagnostic(self, y_dic):
         """
