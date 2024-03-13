@@ -1,0 +1,9 @@
+For project registration I need:
+
+Student: full name and student number
+Graduate program:
+Danish title:
+English title:
+ECTS Points:
+Starting Date:
+ECTS Points during thesis: (you get 3 weeks per 5 ECTS you take during the thesis. Re-exams are included).
