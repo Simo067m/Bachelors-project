@@ -64,15 +64,16 @@ class ptb_xl_dataset:
         Y['diagnostic_superclass'] = Y.scp_codes.apply(self.aggregate_diagnostic)
 
         # Split data into train and test
-        test_fold = 10
+        test_fold = self.test_fold
+
         # Train
         X_train_ecg = X_ecg[np.where(Y.strat_fold != test_fold)]
-        X_train_text = X_text[np.where(Y.strat_fold != test_fold)]
-        #X_train_text
+        X_train_text = X_text[np.where(Y.strat_fold != test_fold)].tolist()
         y_train = Y[(Y.strat_fold != test_fold)].diagnostic_superclass
+
         # Test
         X_test_ecg = X_ecg[np.where(Y.strat_fold == test_fold)]
-        X_test_text = X_text[np.where(Y.strat_fold == test_fold)]
+        X_test_text = X_text[np.where(Y.strat_fold == test_fold)].tolist()
         y_test = Y[Y.strat_fold == test_fold].diagnostic_superclass
 
         return X_train_ecg, X_train_text, y_train, X_test_ecg, X_test_text, y_test
@@ -85,7 +86,7 @@ class ptb_xl_dataset:
         - df (pandas.DataFrame): The dataset loaded as a pandas DataFrame.
         """
         if self.sampling_rate == 100:
-            ecg_data = [wfdb.rdsamp(self.path_to_dataset+f) for f in tqdm(df.filename_lr, desc="Samples")]
+            ecg_data = [wfdb.rdsamp(self.path_to_dataset+f) for f in tqdm(df.filename_lr, desc="Loading ECG data")]
             text_data = np.array([row for row in df.report])
         else:
             ecg_data = [wfdb.rdsamp(self.path_to_dataset+f) for f in df.filename_hr]
