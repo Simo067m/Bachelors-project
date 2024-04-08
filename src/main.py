@@ -1,11 +1,13 @@
 # Import packages
 import argparse
 import os
+import wandb
+import torch
 
 # Import custom modules
 from dataloader import ptb_xl_dataset
 from models.clinical_bert import bio_clinical_BERT
-from models.resnet18 import resnet18
+from models.resnet18 import ResNet18
 
 # Remove irrelevant pytorch storage warning
 import warnings
@@ -39,27 +41,37 @@ if __name__ == "__main__":
         sampling_rate = 100
         test_fold = 10
         dataset = ptb_xl_dataset(path_to_dataset = path_to_dataset, sampling_rate = sampling_rate, test_fold = test_fold)
+        # Permute the tensor dataset so that the channels are the first dimension
+        dataset.X_train_ecg_tensor = dataset.X_train_ecg_tensor.permute(0, 2, 1)
+        dataset.X_test_ecg_tensor = dataset.X_test_ecg_tensor.permute(0, 2, 1)
     
     # Load the text model
         
     if args.text_model == "bio-clinical-bert":
-        print("BioClinicalBERT model selected.")
+        print("BioClinicalBERT text model selected.")
         
         # Define text model variables TODO: Add this to the argparser
-        bio_clinical_bert = bio_clinical_BERT()
+        text_model = bio_clinical_BERT()
 
     # Load the ECG model
         
     if args.ecg_model == "resnet18":
-        print("ResNet18 model selected.")
+        print("ResNet18 ECG model selected.")
         
         # Define ECG model variables TODO: Add this to the argparser
-        resnet = resnet18()
+        ecg_model = ResNet18()
     
     # Tokenize the text
-    encoded_output = bio_clinical_bert.encode(dataset.X_train_text[:50], add_special_tokens=True)
+    encoded_output = text_model.encode(dataset.X_train_text[:1000], add_special_tokens=True)
 
     # Embed the text
-    embedded_output = bio_clinical_bert.embed(encoded_output)
+    embedded_output = text_model.embed(encoded_output)
 
-    print(embedded_output)
+    # Try sending through the ECG model
+    with torch.no_grad():
+        output = ecg_model(dataset.X_train_ecg_tensor)
+
+    print(output.shape)
+    print(embedded_output.shape)
+
+    print("Done!")
