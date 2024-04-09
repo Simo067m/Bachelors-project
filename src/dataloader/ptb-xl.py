@@ -4,6 +4,7 @@ import wfdb
 import ast
 import time
 from tqdm import tqdm
+import torch
 
 # Define classes for loading each dataset
 
@@ -15,12 +16,14 @@ class ptb_xl_dataset:
     The functionality of this class is adapted from PhysioNet as well.
 
     Attributes:
-    - X_train (list): Training data
+    - X_train_ecg (list): Training ECG data
+    - X_train_text (list): Training text data
     - y_train (list): Training targets
-    - X_test (list): Testing data
+    - X_test_ecg (list): Testing ECG data
+    - X_test_text (list): Testing text data
     - y_test (list): Testing targets
     """
-    def __init__(self, path_to_dataset : str, sampling_rate : int, test_fold : int):
+    def __init__(self, path_to_dataset : str, sampling_rate : int, test_fold : int, load_meta = False):
         """
         Initializes a class instance, and loads the dataset. No function calls are necessary.
 
@@ -28,6 +31,7 @@ class ptb_xl_dataset:
         - path_to_dataset (str): The path to the folder containing the dataset.
         - sampling_rate (int): The sampling rate.
         - test_fold (int): The number of.
+        - load_meta (bool): Whether to load the metadata.
         """
         # Check loading time
         start_time = time.time()
@@ -35,7 +39,12 @@ class ptb_xl_dataset:
         self.path_to_dataset = path_to_dataset
         self.sampling_rate = sampling_rate
         self.test_fold = test_fold
+        if load_meta:
+            self.meta = pd.read_csv(self.path_to_dataset+'ptbxl_database.csv', index_col='ecg_id')
         self.X_train_ecg, self.X_train_text, self.y_train, self.X_test_ecg, self.X_test_text, self.y_test = self.load_data()
+        # Save ecg data as tensors
+        self.X_train_ecg_tensor = torch.tensor(self.X_train_ecg, dtype=torch.float32)
+        self.X_test_ecg_tensor = torch.tensor(self.X_test_ecg, dtype=torch.float32)
 
         end_time = time.time()
         elapsed_time = end_time - start_time
