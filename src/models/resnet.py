@@ -116,7 +116,6 @@ class ResNet(nn.Module):
             x = self.conv3_x(x)
             x = self.conv4_x(x)
             x = self.conv5_x(x)
-            print("Dimensions of the last convolutional feature map: ", x.shape) # Should be 7
 
             # Forward pass through the final layers
             x = self.avgpool(x)

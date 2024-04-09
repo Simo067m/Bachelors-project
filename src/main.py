@@ -5,9 +5,9 @@ import wandb
 import torch
 
 # Import custom modules
-from dataloader import ptb_xl_dataset
+from dataloader.ptb_xl import ptb_xl_dataset
 from models.clinical_bert import bio_clinical_BERT
-from models.resnet import ResNet
+from models.resnet import ResNet, ResidualBlock
 
 # Remove irrelevant pytorch storage warning
 import warnings
@@ -25,6 +25,7 @@ def parse_args():
 
     ecg_model = parser.add_mutually_exclusive_group()
     ecg_model.add_argument("-resnet18", action="store_const", help="ResNet18 model", dest="ecg_model", const="resnet18")
+    ecg_model.add_argument("-resnet34", action="store_const", help="ResNet34 model", dest="ecg_model", const="resnet34")
     
     return parser.parse_args()
 
@@ -37,13 +38,15 @@ if __name__ == "__main__":
     # Load the dataset
 
     if args.dataset == "ptb-xl":
+        dataset_name = "PTB-XL"
         print("PTB-XL dataset selected.")
         
+        # Import configs
+        from configs.ptb_xl_configs import Configs
+        configs = Configs()
+
         # Define dataset variables TODO: Add this to the argparser
-        path_to_dataset = os.path.join(os.getcwd(), "Datasets", "ptb-xl", "")
-        sampling_rate = 100
-        test_fold = 10
-        dataset = ptb_xl_dataset(path_to_dataset = path_to_dataset, sampling_rate = sampling_rate, test_fold = test_fold)
+        dataset = ptb_xl_dataset(path_to_dataset = configs.path_to_dataset, sampling_rate = configs.sampling_rate, test_fold = configs.test_fold)
         # Permute the tensor dataset so that the channels are the first dimension
         dataset.X_train_ecg_tensor = dataset.X_train_ecg_tensor.permute(0, 2, 1)
         dataset.X_test_ecg_tensor = dataset.X_test_ecg_tensor.permute(0, 2, 1)
@@ -51,6 +54,7 @@ if __name__ == "__main__":
     # Load the text model
         
     if args.text_model == "bio-clinical-bert":
+        text_model_name = "BioClinicalBERT"
         print("BioClinicalBERT text model selected.")
         
         # Define text model variables TODO: Add this to the argparser
@@ -59,10 +63,26 @@ if __name__ == "__main__":
     # Load the ECG model
         
     if args.ecg_model == "resnet18":
-        print("ResNet18 ECG model selected.")
+        ecg_model_name = "ResNet-18"
+        print("ResNet-18 ECG model selected.")
+        
+        """
+        Notes on training: Hyperparameters from ETP paper section 3.2
+        Learning rate: 2 * e^-3: 0.002
+        Weight decay: 1 * e^-5: 0.00001
+        During pre-training: Epochs: 50, batch size: 128
+        Downstream tasks: Batch size: 32
+        """
+
+        # Define ECG model variables TODO: Add this to the argparser
+        ecg_model = ResNet(configs.in_channels, configs.num_classes, 18, ResidualBlock)
+    
+    elif args.ecg_model == "resnet34":
+        ecg_model_name = "ResNet-34"
+        print("ResNet-34 ECG model selected.")
         
         # Define ECG model variables TODO: Add this to the argparser
-        ecg_model = ResNet()
+        ecg_model = ResNet(configs.in_channels, configs.num_classes, 34, ResidualBlock)
     
     # Tokenize the text
     encoded_output = text_model.encode(dataset.X_train_text[:1000], add_special_tokens=True)
