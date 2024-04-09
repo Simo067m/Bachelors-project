@@ -7,7 +7,7 @@ import torch
 # Import custom modules
 from dataloader import ptb_xl_dataset
 from models.clinical_bert import bio_clinical_BERT
-from models.resnet18 import ResNet18
+from models.resnet import ResNet
 
 # Remove irrelevant pytorch storage warning
 import warnings
@@ -30,6 +30,9 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+
+    # Set the device to gpu if available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load the dataset
 
@@ -59,7 +62,7 @@ if __name__ == "__main__":
         print("ResNet18 ECG model selected.")
         
         # Define ECG model variables TODO: Add this to the argparser
-        ecg_model = ResNet18()
+        ecg_model = ResNet()
     
     # Tokenize the text
     encoded_output = text_model.encode(dataset.X_train_text[:1000], add_special_tokens=True)
