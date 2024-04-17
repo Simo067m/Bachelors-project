@@ -8,7 +8,7 @@ class ResidualBlock(nn.Module):
     The residual block is used for the ResNet18 and ResNet34 models.
     For deeper models, a bottleneck block is used instead for computational efficiency.
     """
-    def __init__(self, in_channels: int, out_channels: int, stride: int, downsample : nn.Module = None, expansion : int = 1):
+    def __init__(self, in_channels : int, out_channels : int, stride : int, downsample : nn.Module = None, expansion : int = 1):
         super().__init__()
         self.downsample = downsample
         self.expansion = expansion # Expansion is 1 for ResNet18 and ResNet34
@@ -44,13 +44,63 @@ class ResidualBlock(nn.Module):
         out = self.relu(out)
         return out
 
+class BottleNeck(nn.Module):
+    """
+     A Bottleneck block for a ResNet model.
+     The bottleneck block is used for the ResNet50, ResNet101, and ResNet152 models.
+     However, it may be used for ResNet18 and ResNet34 as well, as in the ETP paper.
+    """
+    def __init__(self, in_channels : int, out_channels : int, stride : int, downsample : nn.Module = None, expansion : int = 4):
+        super().__init__()
+        self.downsample = downsample
+        self.expansion = expansion # Expansion is 4 for ResNet50, ResNet101, and ResNet152
+
+        # Define the layers of the bottleneck block
+        self.conv1 = nn.Conv1d(in_channels, in_channels, kernel_size=1, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm1d(in_channels)
+        self.relu = nn.ReLU(inplace=True)
+
+        self.conv2 = nn.Conv1d(in_channels, in_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm1d(in_channels)
+        
+        self.conv3 = nn.Conv1d(in_channels, out_channels * self.expansion, kernel_size=1, stride=1, padding=1, bias=False)
+        self.bn3 = nn.BatchNorm1d(out_channels * self.expansion)
+
+    def forward(self, x):
+        # Save the input for the identity mapping
+        identity = x
+
+        # Forward pass through the first convolutional layer
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        # Forward pass through the second convolutional layer
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        # Forward pass through the third convolutional layer
+        out = self.conv3(out)
+        out = self.bn3(out)
+
+        # If a downsampling model is passed in, perform downsampling
+        if self.downsample is not None:
+            identity = self.downsample(x)
+        
+        # Add the identity to the output and apply the ReLU activation function
+        out += identity
+        out = self.relu(out)
+        return out
+
 class ResNet(nn.Module):
     """
     ResNet modified for signal processing. The main modifications are the use of 1D layers instead of 2D layers.
     Follows the implementation as described in "Deep Residual Learning for Image Recognition" (https://arxiv.org/abs/1512.03385).
-    The architecture is built as in Table 1. 
+    The architecture is built as in Table 1.
+    Uses either a Residual Block or Bottleneck as "block", depending on depth.
     """
-    def __init__(self, data_in_channels : int, num_classes : int, num_layers : int, block : Type[ResidualBlock]):
+    def __init__(self, data_in_channels : int, num_classes : int, num_layers : int, block : object):
         super().__init__()
         """
         The number of layers in the network is specified by the num_layers parameter. Must match those from the paper, currently either 18 or 34.
@@ -61,6 +111,15 @@ class ResNet(nn.Module):
         elif num_layers == 34:
             self.layers = [3, 4, 6, 3]
             self.expansion = 1 # 1 for ResNet34
+        elif num_layers == 50:
+            self.layers = [3, 4, 6, 3]
+            self.expansion = 4
+        elif num_layers == 101:
+            self.layers = [3, 4, 23, 3]
+            self.expansion = 4
+        elif num_layers == 152:
+            self.layers = [3, 8, 36, 3]
+            self.expansion = 4
         else:
             raise ValueError("The number of layers must be either 18 or 34.")
 
@@ -123,6 +182,6 @@ class ResNet(nn.Module):
             # x = torch.flatten(x, 1)
             x = self.fc(x)
 
-            soft = nn.Softmax(dim = 1)
-            x = soft(x)
+            #soft = nn.Softmax(dim = 1)
+            #x = soft(x)
             return x

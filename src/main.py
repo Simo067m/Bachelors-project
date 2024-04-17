@@ -3,11 +3,14 @@ import argparse
 import os
 import wandb
 import torch
+from torch.utils.data import DataLoader
 
 # Import custom modules
-from dataloader.ptb_xl import ptb_xl_dataset
+from dataloader.ptb_xl import ptb_xl_data_generator
 from models.clinical_bert import bio_clinical_BERT
 from models.resnet import ResNet, ResidualBlock
+from dataloader import data_processing
+from train_eval.trainer import Trainer
 
 # Remove irrelevant pytorch storage warning
 import warnings
@@ -21,7 +24,7 @@ def parse_args():
     dataset.add_argument("-ptb-xl", action="store_const", help="PTB-XL dataset", dest="dataset", const="ptb-xl")
 
     text_model = parser.add_mutually_exclusive_group()
-    text_model.add_argument("-bio-clinical-bert", action="store_const", help="BioClinicalBERT model", dest="text_model", const="bio-clinical-bert")
+    text_model.add_argument("-bioclinicalbert", action="store_const", help="BioClinicalBERT model", dest="text_model", const="bio-clinical-bert")
 
     ecg_model = parser.add_mutually_exclusive_group()
     ecg_model.add_argument("-resnet18", action="store_const", help="ResNet18 model", dest="ecg_model", const="resnet18")
@@ -46,14 +49,12 @@ if __name__ == "__main__":
         configs = Configs()
 
         # Define dataset variables TODO: Add this to the argparser
-        dataset = ptb_xl_dataset(path_to_dataset = configs.path_to_dataset, sampling_rate = configs.sampling_rate, test_fold = configs.test_fold)
-        # Permute the tensor dataset so that the channels are the first dimension
-        dataset.X_train_ecg_tensor = dataset.X_train_ecg_tensor.permute(0, 2, 1)
-        dataset.X_test_ecg_tensor = dataset.X_test_ecg_tensor.permute(0, 2, 1)
+        train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, use_random_split=True)
+        
     
     # Load the text model
         
-    if args.text_model == "bio-clinical-bert":
+    if args.text_model == "bioclinicalbert":
         text_model_name = "BioClinicalBERT"
         print("BioClinicalBERT text model selected.")
         
@@ -84,17 +85,16 @@ if __name__ == "__main__":
         # Define ECG model variables TODO: Add this to the argparser
         ecg_model = ResNet(configs.in_channels, configs.num_classes, 34, ResidualBlock)
     
-    # Tokenize the text
-    encoded_output = text_model.encode(dataset.X_train_text[:1000], add_special_tokens=True)
+    # Define the optimizer and criterion TODO: Add this to the argparser
+    optimizer = torch.optim.Adam(ecg_model.parameters(), lr=configs.learning_rate, weight_decay=configs.weight_decay)
+    criterion = torch.nn.CrossEntropyLoss()
 
-    # Embed the text
-    embedded_output = text_model.embed(encoded_output)
+    trainer = Trainer(True)
 
-    # Try sending through the ECG model
-    with torch.no_grad():
-        output = ecg_model(dataset.X_train_ecg_tensor)
-
-    print(output.shape)
-    print(embedded_output.shape)
+    # Train the model
+    if torch.cuda.is_available():
+        ecg_model = ecg_model.cuda()
+    
+    trainer.train(ecg_model, train_loader, val_loader, 100, optimizer, criterion, device)
 
     print("Done!")

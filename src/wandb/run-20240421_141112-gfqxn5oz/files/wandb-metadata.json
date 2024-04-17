@@ -1,0 +1,52 @@
+{
+    "os": "Windows-10-10.0.22631-SP0",
+    "python": "3.11.6",
+    "heartbeatAt": "2024-04-21T12:11:20.068080",
+    "startedAt": "2024-04-21T12:11:12.528685",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "<python with no main file>",
+    "codePathLocal": null,
+    "git": {
+        "remote": "https://github.com/Simo067m/Bachelors-project.git",
+        "commit": "683585e9d9126d080cf3c81354383e77c2269238"
+    },
+    "email": "s214592@student.dtu.dk",
+    "root": "C:/Users/ssjsi/Documents/Bachelors-project",
+    "host": "LAPTOP-232D3BIL",
+    "username": "ssjsi",
+    "executable": "c:\\Users\\ssjsi\\Documents\\Bachelors-project\\.venv\\Scripts\\python.exe",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 2208.0,
+        "min": 0.0,
+        "max": 2208.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2208.0,
+            "min": 0.0,
+            "max": 2208.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 952.3772621154785,
+            "used": 208.75659561157227
+        }
+    },
+    "gpu": "NVIDIA GeForce GTX 1650 Ti with Max-Q Design",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce GTX 1650 Ti with Max-Q Design",
+            "memory_total": 4294967296
+        }
+    ],
+    "memory": {
+        "total": 15.788082122802734
+    }
+}

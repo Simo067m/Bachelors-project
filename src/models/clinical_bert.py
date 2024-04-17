@@ -1,19 +1,21 @@
 from transformers import AutoTokenizer, AutoModel
 import torch
+import torch.nn as nn
 import time
 
 # Disable cache warning
 HF_HUB_DISABLE_SYMLINKS_WARNING = True
 
-class bio_clinical_BERT:
+class bio_clinical_BERT(nn.Module):
     """
     This class implements the BioClinicalBERT model.
     https://arxiv.org/pdf/1904.03323.pdf
 
     """
-    def __init__(self):
-        self.tokenizer = AutoTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
-        self.model = AutoModel.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
+    def __init__(self, model_path : str = "emilyalsentzer/Bio_ClinicalBERT"):
+        super().__init__()
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModel.from_pretrained(model_path)
     
     def encode(self, text : list, add_special_tokens : bool):
         """
@@ -52,3 +54,10 @@ class bio_clinical_BERT:
 
         return embeddings
     
+    def forward(self, text : list, add_special_tokens : bool = False):
+        """
+        Returns the embeddings of the text input.
+        """
+        encoded_output = self.encode(text, add_special_tokens)
+        embeddings = self.embed(encoded_output)
+        return embeddings
