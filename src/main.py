@@ -100,7 +100,7 @@ if __name__ == "__main__":
     if torch.cuda.is_available():
         ecg_model = ecg_model.cuda()
     
-    trainer.train(ecg_model, train_loader, val_loader, 3, optimizer, criterion, device)
+    trainer.train(ecg_model, train_loader, val_loader, 3, optimizer, criterion, device, "hpc_saved.pth")
     trainer.test(ecg_model, test_loader, device)
 
     print("Done!")
