@@ -16,4 +16,4 @@ class Configs(object):
         self.weight_decay = 0.00001 # From "ETP: Learning Transferable ECG Representations via ECG-Text Pre-Training" (https://arxiv.org/pdf/2309.07145.pdf) section 3.2
         self.batch_size = 128 # From "ETP: Learning Transferable ECG Representations via ECG-Text Pre-Training" (https://arxiv.org/pdf/2309.07145.pdf) section 3.2
 
-        self.path_to_splits = os.path.join(os.getcwd(), "..", "Datasets", "ptb-xl", "saved_splits", "") #TODO: Remove ".." when running in the same directory as main.py
+        self.path_to_splits = os.path.join(os.getcwd(), "Datasets", "ptb-xl", "saved_splits", "") #TODO: Remove ".." when running in the same directory as main.py

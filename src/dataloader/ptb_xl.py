@@ -40,9 +40,6 @@ class ptb_xl_processor():
         - sampling_rate (int): The sampling rate.
         - load_meta (bool): Whether to load the metadata.
         """
-        
-        print("Loading PTB-XL...")
-        start_time = time.time()
 
         self.split_method = split_method
         self.test_fold = test_fold
@@ -56,12 +53,6 @@ class ptb_xl_processor():
             self.meta = pd.read_csv(self.path_to_dataset+'ptbxl_database.csv', index_col='ecg_id')
         
         self.load_data()
-
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        minutes = int(elapsed_time // 60)
-        seconds = int(elapsed_time % 60)
-        print(f"Finished loading PTB-XL in {minutes} minutes and {seconds} seconds.")
     
     def load_data(self):
         """
@@ -94,9 +85,9 @@ class ptb_xl_processor():
             torch.save(torch.tensor(X_ecg, dtype=torch.float32), "../Datasets/ptb-xl/ecg_data.pt")
         
         else:
-            Y = pd.read_csv("../Datasets/ptb-xl/saved_splits/data.csv")
-            X_ecg = torch.load("../Datasets/ptb-xl/saved_splits/ecg_data.pt")
-            with open("../Datasets/ptb-xl/saved_splits/text_reports.txt", "r") as f:
+            Y = pd.read_csv(self.path_to_dataset + "saved_splits/data.csv")
+            X_ecg = torch.load(self.path_to_dataset + "saved_splits/ecg_data.pt")
+            with open(self.path_to_dataset + "saved_splits/text_reports.txt", "r") as f:
                 X_text = f.readlines()
                 X_text = [line.strip() for line in X_text]
             X_text = np.array(X_text)
@@ -120,21 +111,21 @@ class ptb_xl_processor():
             self.train_ecg, self.val_ecg, self.test_ecg = X_ecg[np.where((Y.strat_fold != self.test_fold) & (Y.strat_fold != self.val_fold))], X_ecg[np.where(Y.strat_fold == self.val_fold)], X_ecg[np.where(Y.strat_fold == self.test_fold)]
 
         # Save data
-        self.train_data.to_csv("../Datasets/ptb-xl/saved_splits/train_data.csv", index=False)
-        self.val_data.to_csv("../Datasets/ptb-xl/saved_splits/val_data.csv", index=False)
-        self.test_data.to_csv("../Datasets/ptb-xl/saved_splits/test_data.csv", index=False)
-        with open("../Datasets/ptb-xl/saved_splits/train_text.txt", "w") as f:
+        self.train_data.to_csv(self.path_to_dataset + "saved_splits/train_data.csv", index=False)
+        self.val_data.to_csv(self.path_to_dataset + "saved_splits/val_data.csv", index=False)
+        self.test_data.to_csv(self.path_to_dataset + "saved_splits/test_data.csv", index=False)
+        with open(self.path_to_dataset + "saved_splits/train_text.txt", "w") as f:
             for report in self.train_text:
                 f.write(report + "\n")
-        with open("../Datasets/ptb-xl/saved_splits/val_text.txt", "w") as f:
+        with open(self.path_to_dataset + "saved_splits/val_text.txt", "w") as f:
             for report in self.val_text:
                 f.write(report + "\n")
-        with open("../Datasets/ptb-xl/saved_splits/test_text.txt", "w") as f:
+        with open(self.path_to_dataset + "saved_splits/test_text.txt", "w") as f:
             for report in self.test_text:
                 f.write(report + "\n")
-        torch.save(self.train_ecg, "../Datasets/ptb-xl/saved_splits/train_ecg.pt")
-        torch.save(self.val_ecg, "../Datasets/ptb-xl/saved_splits/val_ecg.pt")
-        torch.save(self.test_ecg, "../Datasets/ptb-xl/saved_splits/test_ecg.pt")
+        torch.save(self.train_ecg, self.path_to_dataset + "saved_splits/train_ecg.pt")
+        torch.save(self.val_ecg, self.path_to_dataset + "saved_splits/val_ecg.pt")
+        torch.save(self.test_ecg, self.path_to_dataset + "saved_splits/test_ecg.pt")
 
     def load_raw_data(self, df : pd.DataFrame):
         """
@@ -203,6 +194,11 @@ class ptb_xl_dataset(Dataset):
         with open(path_to_data+type+"_text.txt", "r") as f:
             for line in f:
                 self.text_data.append(line.strip())
+        
+        # Convert text_data to a tensor for sending to gpu
+        numerical_data = [[ord(char) for char in string] for string in self.text_data]
+        self.tensors_on_gpu = [torch.tensor(data).cuda() for data in numerical_data]
+
 
         self.y = self.data.diagnostic_superclass
         self.y_tensor, self.y_tensor_one_hot = self.y_to_tensors(self.y)

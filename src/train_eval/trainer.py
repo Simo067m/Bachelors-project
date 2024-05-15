@@ -12,9 +12,10 @@ class Trainer:
     """
     Class to train and evaluate torch.nn models.
     """
-    def __init__(self, log : bool = False):
-        self.log = log
-        if self.log:
+    def __init__(self, log_wandb : bool = False, wandb_configs : object = None, save_model : bool = False):
+        self.log_wandb = log_wandb
+        self.save_model = save_model
+        if self.log_wandb:
             wandb.init(
                 project="Feature-Testing",
 
@@ -86,7 +87,7 @@ class Trainer:
                 
             print(f"Epoch {epoch + 1} Loss: {running_loss/77:.4f}")
             print(f"Validation accuracy: {total_correct/total_samples:.2f}")
-            if self.log:
+            if self.log_wandb:
                 wandb.log({"Loss" : running_loss/77, "Validation Accuracy" : total_correct/total_samples})
             
             total_loss.append(running_loss)
@@ -127,8 +128,41 @@ class Trainer:
 
         print(f"Accuracy: {accuracy:.2f}")
         print(f"F1 Score: {f1:.2f}")
-        unique_elements, counts = torch.unique(torch.tensor(all_labels), return_counts=True)
-        for element, count in zip(unique_elements, counts):
-            print(f"Element {element.item()}: Count {count.item()}")
 
+    def ecg_encoder_pre_train(self, ecg_model, text_model, train_loader, num_epochs, optimizer, criterion, device, save_path = None):
+        """
+        Pre-trains the ecg encoder.
+        Only the ecg model weights are trained, as the pre-trained text model weights are frozen.
+        """
+        losses = []
+
+        for epoch in range(num_epochs):
+            running_loss = 0.0
+            
+            for i, data in tqdm(enumerate(train_loader), desc=f"Epoch {epoch + 1} / {num_epochs}", total=len(train_loader)):
+                ecg, text, target = data
+                ecg = ecg.to(device)
+                target = target.to(device)
+
+                optimizer.zero_grad()
+
+                ecg_output = ecg_model(ecg)
+                text_output = text_model(text).to(device) # Text was on cpu but needs to be on the same device as the ecg model
+
+                loss = criterion(ecg_output, text_output)
+
+                loss.backward()
+                optimizer.step()
+
+                running_loss += loss.item()
+
+            losses.append(running_loss / len(train_loader))
+        
+        print(f"Finished pre-training {ecg_model.name}.")
+
+        if save_path is not None:
+            torch.save(ecg_model.state_dict(), save_path)
+            print(f"Model saved at {save_path}.")
+        
+        return losses
 

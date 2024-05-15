@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from typing import Type
+from models.linear_projectors import EcgLinearProjectionHead
 
 class ResidualBlock(nn.Module):
     """
@@ -16,10 +16,11 @@ class ResidualBlock(nn.Module):
         # Define the layers of the residual block
         self.conv1 = nn.Conv1d(in_channels, out_channels, kernel_size = 3, stride = stride, padding = 1, bias = False)
         self.bn1 = nn.BatchNorm1d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu1 = nn.ReLU(inplace=True)
 
         self.conv2 = nn.Conv1d(out_channels, out_channels * self.expansion, kernel_size = 3, stride = 1, padding = 1, bias = False)
         self.bn2 = nn.BatchNorm1d(out_channels * self.expansion) # Dimensions are expanded by the expansion factor deeper layer architectures
+        self.relu2 = nn.ReLU(inplace=True)
     
     # Define the forward function
     def forward(self, x):
@@ -29,7 +30,7 @@ class ResidualBlock(nn.Module):
         # Forward pass through the first convolutional layer
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        out = self.relu1(out)
 
         # Forward pass through the second convolutional layer
         out = self.conv2(out)
@@ -41,7 +42,7 @@ class ResidualBlock(nn.Module):
         
         # Add the identity to the output and apply the ReLU activation function
         out += identity
-        out = self.relu(out)
+        out = self.relu2(out)
         return out
 
 class BottleNeck(nn.Module):
@@ -58,13 +59,15 @@ class BottleNeck(nn.Module):
         # Define the layers of the bottleneck block
         self.conv1 = nn.Conv1d(in_channels, in_channels, kernel_size=1, stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm1d(in_channels)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu1 = nn.ReLU(inplace=True)
 
         self.conv2 = nn.Conv1d(in_channels, in_channels, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm1d(in_channels)
+        self.relu2 = nn.ReLU(inplace=True)
         
         self.conv3 = nn.Conv1d(in_channels, out_channels * self.expansion, kernel_size=1, stride=1, padding=1, bias=False)
         self.bn3 = nn.BatchNorm1d(out_channels * self.expansion)
+        self.relu3 = nn.ReLU(inplace=True)
 
     def forward(self, x):
         # Save the input for the identity mapping
@@ -73,12 +76,12 @@ class BottleNeck(nn.Module):
         # Forward pass through the first convolutional layer
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        out = self.relu1(out)
 
         # Forward pass through the second convolutional layer
         out = self.conv2(out)
         out = self.bn2(out)
-        out = self.relu(out)
+        out = self.relu2(out)
 
         # Forward pass through the third convolutional layer
         out = self.conv3(out)
@@ -90,7 +93,7 @@ class BottleNeck(nn.Module):
         
         # Add the identity to the output and apply the ReLU activation function
         out += identity
-        out = self.relu(out)
+        out = self.relu3(out)
         return out
 
 class ResNet(nn.Module):
@@ -108,20 +111,27 @@ class ResNet(nn.Module):
         if num_layers == 18:
             self.layers = [2, 2, 2, 2]
             self.expansion = 1 # 1 for ResNet18
+            self.name = "ResNet-18"
         elif num_layers == 34:
             self.layers = [3, 4, 6, 3]
             self.expansion = 1 # 1 for ResNet34
+            self.name = "ResNet-34"
         elif num_layers == 50:
             self.layers = [3, 4, 6, 3]
             self.expansion = 4
+            self.name = "ResNet-50"
         elif num_layers == 101:
             self.layers = [3, 4, 23, 3]
             self.expansion = 4
+            self.name = "ResNet-101"
         elif num_layers == 152:
             self.layers = [3, 8, 36, 3]
             self.expansion = 4
+            self.name = "ResNet-152"
         else:
             raise ValueError("The number of layers must be either 18 or 34.")
+        
+        self.linear_proj = EcgLinearProjectionHead(512 * self.expansion)
 
         # Define the "stem" convolutional layer before the residual layers
         self.in_channels = 64 # in_channels defined by the paper, which can be modified for each layer by multiplication
@@ -141,11 +151,11 @@ class ResNet(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool1d(1)
 
         # Define the fully connected layer
-        self.fc = nn.Linear(512 * self.expansion, num_classes)
+        #self.fc = nn.Linear(512 * self.expansion, num_classes)
 
     def _make_layer(self, block, out_channels : int, blocks : int, stride : int = 1):
             downsample = None # Initialize the downsampling layer as None
-            if stride != 1:
+            if stride != 1 or self.in_channels != out_channels * self.expansion:
                 # If stride is not 1, then the dimensions of the input must be changed to match the output
                 downsample = nn.Sequential(
                     nn.Conv1d(self.in_channels, out_channels * self.expansion, kernel_size = 1, stride = stride, bias = False),
@@ -178,10 +188,9 @@ class ResNet(nn.Module):
 
             # Forward pass through the final layers
             x = self.avgpool(x)
-            x = x.view(x.size(0), -1) # TODO: What is this doing? 
-            # x = torch.flatten(x, 1)
-            x = self.fc(x)
+            #x = x.view(x.size(0), -1)
+            x = torch.flatten(x, 1)
+            
+            x = self.linear_proj(x) # Apply the linear projection head
 
-            #soft = nn.Softmax(dim = 1)
-            #x = soft(x)
             return x
