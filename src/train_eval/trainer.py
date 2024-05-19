@@ -141,6 +141,7 @@ class Trainer:
             
             for i, data in tqdm(enumerate(train_loader), desc=f"Epoch {epoch + 1} / {num_epochs}", total=len(train_loader)):
                 ecg, text, target = data
+                text.to(device)
                 ecg = ecg.to(device)
                 target = target.to(device)
 

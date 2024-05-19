@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 def cosine_similarity(x : torch.Tensor, y : torch.Tensor):
     """
@@ -72,3 +73,7 @@ class Loss_CE(nn.Module):
         loss.requires_grad = True
 
         return loss
+
+class NT_XENT(nn.Module):
+    def __init__(self):
+        super().__init__()
