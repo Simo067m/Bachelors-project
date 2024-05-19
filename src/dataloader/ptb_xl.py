@@ -14,7 +14,6 @@ from torch.utils.data import random_split
 seed = 42
 torch.manual_seed = 42
 # Define classes for loading each dataset
-#TODO: Remove unnecessary attributes and functions
 
 class ptb_xl_processor():
     """
@@ -181,7 +180,7 @@ class ptb_xl_processor():
 class ptb_xl_dataset(Dataset):
     """
     This class implements pytorch's Dataset class for the PTB-XL dataset.
-    It is used to load the data into a DataLoader.
+    It is used to load the data into a Pytorch DataLoader class.
     The data needs to be preprocessed before being loaded into this class.
     """
     def __init__(self, type : str, path_to_data : str, include_text : bool = False):
