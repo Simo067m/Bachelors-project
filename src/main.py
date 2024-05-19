@@ -18,6 +18,11 @@ warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is
 def parse_args():
 
     parser = argparse.ArgumentParser(description='Representation learning of multimodal data using multiview machine learning')
+
+    parser.add_argument("-load_raw_data", action="store_true", default=False, help="Load raw data")
+
+    data_split_method = parser.add_mutually_exclusive_group()
+    data_split_method.add_argument("-pre-split", action="store_const", help="Use pre-split data", dest="data_split_method", const="pre-split")
     
     dataset = parser.add_mutually_exclusive_group()
     dataset.add_argument("-ptb-xl", action="store_const", help="PTB-XL dataset", dest="dataset", const="ptb-xl")
@@ -51,7 +56,7 @@ if __name__ == "__main__":
         configs = Configs()
 
         # Define dataset variables TODO: Add this to the argparser
-        train_loader, val_loader, test_loader = ptb_xl_data_generator(configs)
+        train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method)
         
     
     # Load the text model
