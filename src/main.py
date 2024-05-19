@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument("-load_raw_data", action="store_true", default=False, help="Load raw data")
 
     data_split_method = parser.add_mutually_exclusive_group()
-    data_split_method.add_argument("-pre-split", action="store_const", help="Use pre-split data", dest="data_split_method", const="pre-split")
+    data_split_method.add_argument("-pre-split", action="store_const", help="Use pre-split data", dest="data_split_method", const="pre_split")
     
     dataset = parser.add_mutually_exclusive_group()
     dataset.add_argument("-ptb-xl", action="store_const", help="PTB-XL dataset", dest="dataset", const="ptb-xl")
