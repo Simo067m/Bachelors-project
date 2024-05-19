@@ -77,11 +77,11 @@ class ptb_xl_processor():
             
             X_ecg, X_text = self.load_raw_data(Y)
 
-            Y.to_csv("Datasets/ptb-xl/data.csv", index=False)
-            with open("Datasets/ptb-xl/text_reports.txt", "w") as f:
+            Y.to_csv("Datasets/ptb-xl/saved_splits/data.csv", index=False)
+            with open("Datasets/ptb-xl/saved_splits/text_reports.txt", "w") as f:
                 for report in X_text:
                     f.write(report + "\n")
-            torch.save(torch.tensor(X_ecg, dtype=torch.float32), "Datasets/ptb-xl/ecg_data.pt")
+            torch.save(torch.tensor(X_ecg, dtype=torch.float32), "Datasets/ptb-xl/saved_splits/ecg_data.pt")
         
         else:
             Y = pd.read_csv(self.path_to_dataset + "saved_splits/data.csv")
