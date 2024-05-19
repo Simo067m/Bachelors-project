@@ -134,7 +134,7 @@ class ptb_xl_processor():
         - df (pandas.DataFrame): The dataset loaded as a pandas DataFrame.
         """
         if self.sampling_rate == 100:
-            ecg_data = [wfdb.rdsamp(self.path_to_dataset+f) for f in tqdm(df.filename_lr, desc="Loading ECG data")]
+            ecg_data = [wfdb.rdsamp(self.path_to_dataset+f) for f in df.filename_lr]
             text_data = np.array([row for row in df.report])
         else:
             ecg_data = [wfdb.rdsamp(self.path_to_dataset+f) for f in df.filename_hr]
