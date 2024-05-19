@@ -193,11 +193,6 @@ class ptb_xl_dataset(Dataset):
         with open(path_to_data+type+"_text.txt", "r") as f:
             for line in f:
                 self.text_data.append(line.strip())
-        
-        # Convert text_data to a tensor for sending to gpu
-        numerical_data = [[ord(char) for char in string] for string in self.text_data]
-        self.tensors_on_gpu = [torch.tensor(data).cuda() for data in numerical_data]
-
 
         self.y = self.data.diagnostic_superclass
         self.y_tensor, self.y_tensor_one_hot = self.y_to_tensors(self.y)
