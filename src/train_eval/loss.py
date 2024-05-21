@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 def cosine_similarity(x : torch.Tensor, y : torch.Tensor):
     """
@@ -15,65 +16,61 @@ def cosine_similarity_torch(x: torch.Tensor, y: torch.Tensor):
     Uses the torch.nn.functional.cosine_similarity function.
     """
     return torch.nn.functional.cosine_similarity(x, y, dim = 0)
-
-class Loss_CE(nn.Module):
-
-    def __init__(self, temperature : float = 0.07):
-        super().__init__()
+    
+class NTXentloss(nn.Module):
+    def __init__(self, batch_size, temperature=0.07, device="cuda"):
+        """Compute the NT-Xent loss for contrastive learning.
+        k = batch_size
+        """
+        super(NTXentloss, self).__init__()
+        self.batch_size = batch_size
         self.temperature = temperature
-
-    def cosine_similarity(self, x : torch.Tensor, y : torch.Tensor):
-        dot_product = torch.mm(x, y.t())
-        magnitude_x = torch.norm(x, dim=1)
-        magnitude_y = torch.norm(y, dim=1)
-        cosine_similarities = dot_product / torch.ger(magnitude_x, magnitude_y)
-
-        return cosine_similarities
+        self.device = device
+        self.negatives_mask = self.get_correlated_mask().to(self.device)
+        self.similarity_function = nn.CosineSimilarity(dim=2)
+        self.criterion  = nn.CrossEntropyLoss(reduction="sum")
     
-    def nt_xent(self, cos_sims : torch.Tensor):
-        """
-        Compute the normalized temperature scaled cross entropy loss.
-        """
-        loss = []
-
-        for i in range(len(cos_sims)):
-            neg_pairs = 0
-            pos_pair = 0
-            for j in range(len(cos_sims[i])):
-                if i == j:
-                    pos_pair = torch.exp(cos_sims[i][j] / self.temperature)
-                else:
-                    neg_pairs += torch.exp(cos_sims[i][j] / self.temperature)
-            loss.append(-torch.log(pos_pair / neg_pairs))
-
-        return torch.Tensor(loss)
+    def get_correlated_mask(self):
+        """Generate a mask to prevent positive pairs from being selected"""
+        diag = np.eye(2 * self.batch_size)
+        l1 = np.eye((2 * self.batch_size), 2 * self.batch_size, k = -self.batch_size)
+        l2 = np.eye((2 * self.batch_size), 2 * self.batch_size, k = self.batch_size)
+        mask = torch.from_numpy((diag + l1 + l2))
+        mask = (1 - mask).type(torch.bool)
+        return mask.to(self.device)
     
-    def total_loss(self, loss_e2t : torch.Tensor, loss_t2e : torch.Tensor):
-        """
-        Compute the total loss.
-        """
-        loss_sum = loss_e2t.sum() + loss_t2e.sum()
+    def _get_correlated_mask_with_anti_diagonal(self):
+        mask = torch.ones((self.batch_size, self.batch_size), dtype=bool)
+        mask = mask.fill_diagonal_(0)
+        for i in range(self.batch_size):
+            mask[i, self.batch_size - i - 1] = 0
+        return mask
+    
+    def compute_loss(self, similarity_matrix):
 
-        loss = 1 / (2 * len(loss_e2t)) * loss_sum
+        l_pos = torch.diag(similarity_matrix, self.batch_size)
+        r_pos = torch.diag(similarity_matrix, -self.batch_size)
+        positives = torch.cat([l_pos, r_pos]).view(2 * self.batch_size, 1)
+
+        negatives = similarity_matrix[self.negatives_mask].view(2 * self.batch_size, -1)
+
+        logits = torch.cat((positives, negatives), dim=1)
+
+        targets = torch.zeros(2 * self.batch_size).to(self.device).long()
+        loss = self.criterion(logits, targets)
 
         return loss
+    
+    def forward(self, x, y):
+        representations = torch.cat([x, y], dim=0)
+        similarity_matrix = self.similarity_function(representations.unsqueeze(1), representations.unsqueeze(0)) / self.temperature
 
-    def forward(self, ecg : torch.Tensor, text : torch.Tensor):
+        representations_rev = torch.cat([y, x], dim=0)
+        similarity_matrix_rev = self.similarity_function(representations_rev.unsqueeze(1), representations_rev.unsqueeze(0)) / self.temperature
 
-        # Compute the cosine similarities between the two tensors
-        r_e2t = self.cosine_similarity(ecg, text)
-        r_t2e = self.cosine_similarity(text, ecg)
+        loss = self.compute_loss(similarity_matrix)
+        loss_rev = self.compute_loss(similarity_matrix_rev)
 
-        # Compute the normalized temperature scaled cross entropy loss
-        loss_e2t = self.nt_xent(r_e2t)
-        loss_t2e = self.nt_xent(r_t2e)
+        total_loss = (loss + loss_rev) / (2 * self.batch_size)
 
-        loss = self.total_loss(loss_e2t, loss_t2e)
-
-        loss.requires_grad = True
-
-        return loss
-
-class NT_XENT(nn.Module):
-    def __init__(self):
-        super().__init__()
+        return total_loss
