@@ -225,12 +225,12 @@ class ptb_xl_dataset(Dataset):
         else:
             return self.ecg_data[idx], self.y_tensor[idx]
     
-def ptb_xl_data_generator(configs, split_method : str = "pre_split", sampling_rate : int = 100, include_text : bool = False):
+def ptb_xl_data_generator(configs, split_method : str = "pre_split", load_raw_data : bool = False, sampling_rate : int = 100, include_text : bool = False):
     """
     Generates the DataLoader objects for the PTB-XL dataset.
     """
     # Preprocess the data
-    preprocessed = ptb_xl_processor(configs.path_to_dataset, split_method=split_method, sampling_rate = sampling_rate)
+    preprocessed = ptb_xl_processor(configs.path_to_dataset, split_method=split_method, sampling_rate = sampling_rate, load_raw=load_raw_data)
     # Load the data into the dataset
     train_dataset = ptb_xl_dataset("train", configs.path_to_splits, include_text=include_text)
     val_dataset = ptb_xl_dataset("val", configs.path_to_splits, include_text=include_text)

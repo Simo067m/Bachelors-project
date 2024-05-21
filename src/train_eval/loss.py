@@ -17,12 +17,12 @@ def cosine_similarity_torch(x: torch.Tensor, y: torch.Tensor):
     """
     return torch.nn.functional.cosine_similarity(x, y, dim = 0)
     
-class NTXentloss(nn.Module):
+class NTXent_loss(nn.Module):
     def __init__(self, batch_size, temperature=0.07, device="cuda"):
         """Compute the NT-Xent loss for contrastive learning.
         k = batch_size
         """
-        super(NTXentloss, self).__init__()
+        super(NTXent_loss, self).__init__()
         self.batch_size = batch_size
         self.temperature = temperature
         self.device = device
