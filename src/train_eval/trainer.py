@@ -175,7 +175,7 @@ class Trainer:
             print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {avg_loss:.4f}, Val Loss: {avg_val_loss:.4f}")
 
             if save_name is not None:
-                wandb.log({"Epoch" : epoch + 1, "Train Loss" : avg_loss, "Val Loss" : avg_val_loss})
+                wandb.log({"Train Loss" : avg_loss, "Val Loss" : avg_val_loss}, step=epoch + 1)
 
             ecg_model.train()
         
