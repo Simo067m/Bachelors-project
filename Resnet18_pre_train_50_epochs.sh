@@ -9,7 +9,7 @@
 # Add walltime
 #BSUB -W 12:00
 # Add number of cores
-#BSUB -n 4
+#BSUB -n 1
 # Specify number of hosts
 #BSUB -R "span[hosts=1]"
 # Name output file
