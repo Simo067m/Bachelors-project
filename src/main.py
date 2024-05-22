@@ -153,11 +153,6 @@ if __name__ == "__main__":
     print(f"Selected text model: {text_model_name}")
     print(f"Selected ECG model: {ecg_model_name}")
 
-
-    # Train the model
-    if torch.cuda.is_available():
-        ecg_model = ecg_model.cuda()
-
     # Run the task
 
     trainer = Trainer()
