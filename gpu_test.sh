@@ -7,7 +7,7 @@
 # Ask for memory
 #BSUB -R "rusage[mem=2GB]"
 # Add walltime
-#BSUB -W 12:00
+#BSUB -W 1:00
 # Add number of cores
 #BSUB -n 4
 # Specify number of hosts
