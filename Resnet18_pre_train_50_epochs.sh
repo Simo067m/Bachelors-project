@@ -1,6 +1,7 @@
 #!/bin/bash
-# Ask for hpc queue
-#BSUB -q hpc
+# Ask for a queue with gpu
+#BSUB -q gpuv100
+#BSUB -gpu "num=1:mode=exclusive_process"
 # Name the job
 #BSUB -J pre_train_resnet18_50_epochs
 # Ask for memory
@@ -18,6 +19,9 @@
 
 # Load python module
 module load python3/3.11.7
+
+# Load cuda
+module load cuda/12.1
 
 
 # Activate virtual environment
