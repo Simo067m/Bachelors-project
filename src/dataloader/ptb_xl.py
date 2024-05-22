@@ -187,10 +187,10 @@ class ptb_xl_dataset(Dataset):
 
         self.include_text = include_text
 
-        self.data = pd.read_csv(path_to_data+type+"_data.csv")
-        self.ecg_data = torch.load(path_to_data+type+"_ecg.pt").clone().detach().permute(0, 2, 1)
+        self.data = pd.read_csv(path_to_data+"saved_splits/"+type+"_data.csv")
+        self.ecg_data = torch.load(path_to_data+"saved_splits/"+type+"_ecg.pt").clone().detach().permute(0, 2, 1)
         self.text_data = []
-        with open(path_to_data+type+"_text.txt", "r") as f:
+        with open(path_to_data+"saved_splits/"+type+"_text.txt", "r") as f:
             for line in f:
                 self.text_data.append(line.strip())
 
@@ -232,9 +232,9 @@ def ptb_xl_data_generator(configs, split_method : str = "pre_split", load_raw_da
     # Preprocess the data
     preprocessed = ptb_xl_processor(configs.path_to_dataset, split_method=split_method, sampling_rate = sampling_rate, load_raw=load_raw_data)
     # Load the data into the dataset
-    train_dataset = ptb_xl_dataset("train", configs.path_to_splits, include_text=include_text)
-    val_dataset = ptb_xl_dataset("val", configs.path_to_splits, include_text=include_text)
-    test_dataset = ptb_xl_dataset("test", configs.path_to_splits, include_text=include_text)
+    train_dataset = ptb_xl_dataset("train", configs.path_to_dataset, include_text=include_text)
+    val_dataset = ptb_xl_dataset("val", configs.path_to_dataset, include_text=include_text)
+    test_dataset = ptb_xl_dataset("test", configs.path_to_dataset, include_text=include_text)
     # Load the data into a DataLoader
     train_loader = DataLoader(train_dataset, batch_size=configs.batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(val_dataset, batch_size=configs.batch_size, shuffle=True, drop_last=True)
