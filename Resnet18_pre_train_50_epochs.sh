@@ -5,11 +5,11 @@
 # Name the job
 #BSUB -J pre_train_resnet18_50_epochs
 # Ask for memory
-#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "rusage[mem=2GB]"
 # Add walltime
 #BSUB -W 12:00
 # Add number of cores
-#BSUB -n 1
+#BSUB -n 4
 # Specify number of hosts
 #BSUB -R "span[hosts=1]"
 # Name output file
