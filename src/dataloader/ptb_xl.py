@@ -122,9 +122,9 @@ class ptb_xl_processor():
         with open(self.path_to_dataset + "saved_splits/test_text.txt", "w") as f:
             for report in self.test_text:
                 f.write(report + "\n")
-        torch.save(torch.tensor(self.train_ecg), self.path_to_dataset + "saved_splits/train_ecg.pt")
-        torch.save(torch.tensor(self.val_ecg), self.path_to_dataset + "saved_splits/val_ecg.pt")
-        torch.save(torch.tensor(self.test_ecg), self.path_to_dataset + "saved_splits/test_ecg.pt")
+        torch.save(self.train_ecg.clone().detach(), self.path_to_dataset + "saved_splits/train_ecg.pt")
+        torch.save(self.val_ecg.clone().detach(), self.path_to_dataset + "saved_splits/val_ecg.pt")
+        torch.save(self.test_ecg.clone().detach(), self.path_to_dataset + "saved_splits/test_ecg.pt")
 
     def load_raw_data(self, df : pd.DataFrame):
         """
@@ -187,10 +187,10 @@ class ptb_xl_dataset(Dataset):
 
         self.include_text = include_text
 
-        self.data = pd.read_csv(path_to_data+type+"_data.csv")
-        self.ecg_data = torch.load(path_to_data+type+"_ecg.pt").clone().detach().permute(0, 2, 1)
+        self.data = pd.read_csv(path_to_data+"saved_splits/"+type+"_data.csv")
+        self.ecg_data = torch.load(path_to_data+"saved_splits/"+type+"_ecg.pt").clone().detach().permute(0, 2, 1)
         self.text_data = []
-        with open(path_to_data+type+"_text.txt", "r") as f:
+        with open(path_to_data+"saved_splits/"+type+"_text.txt", "r") as f:
             for line in f:
                 self.text_data.append(line.strip())
 
@@ -225,18 +225,18 @@ class ptb_xl_dataset(Dataset):
         else:
             return self.ecg_data[idx], self.y_tensor[idx]
     
-def ptb_xl_data_generator(configs, split_method : str = "pre_split", sampling_rate : int = 100, include_text : bool = False):
+def ptb_xl_data_generator(configs, split_method : str = "pre_split", load_raw_data : bool = False, sampling_rate : int = 100, include_text : bool = False):
     """
     Generates the DataLoader objects for the PTB-XL dataset.
     """
     # Preprocess the data
-    preprocessed = ptb_xl_processor(configs.path_to_dataset, split_method=split_method, sampling_rate = sampling_rate)
+    preprocessed = ptb_xl_processor(configs.path_to_dataset, split_method=split_method, sampling_rate = sampling_rate, load_raw=load_raw_data)
     # Load the data into the dataset
-    train_dataset = ptb_xl_dataset("train", configs.path_to_splits, include_text=include_text)
-    val_dataset = ptb_xl_dataset("val", configs.path_to_splits, include_text=include_text)
-    test_dataset = ptb_xl_dataset("test", configs.path_to_splits, include_text=include_text)
+    train_dataset = ptb_xl_dataset("train", configs.path_to_dataset, include_text=include_text)
+    val_dataset = ptb_xl_dataset("val", configs.path_to_dataset, include_text=include_text)
+    test_dataset = ptb_xl_dataset("test", configs.path_to_dataset, include_text=include_text)
     # Load the data into a DataLoader
-    train_loader = DataLoader(train_dataset, batch_size=configs.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=configs.batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=configs.batch_size, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=configs.batch_size, shuffle=True, drop_last=True)
+    val_loader = DataLoader(val_dataset, batch_size=configs.batch_size, shuffle=True, drop_last=True)
+    test_loader = DataLoader(test_dataset, batch_size=configs.batch_size, shuffle=True, drop_last=True)
     return train_loader, val_loader, test_loader
