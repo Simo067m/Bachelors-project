@@ -7,6 +7,7 @@ from tqdm import tqdm
 import numpy as np
 import wandb
 import os
+import time
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from torcheval.metrics.functional import multiclass_f1_score
 
@@ -123,6 +124,7 @@ class Trainer:
         Pre-trains the ecg encoder.
         Only the ecg model weights are trained, as the pre-trained text model weights are frozen.
         """
+        start_time = time.time()
         losses = []
         val_losses = []
         ecg_model.train()
@@ -157,7 +159,7 @@ class Trainer:
             ecg_model.eval()
             val_running_loss = 0.0
             with torch.no_grad():
-                for i, data in tqdm(enumerate(val_loader), desc=f"Validation {epoch + 1} / {num_epochs}", total=len(val_loader)):
+                for i, data in enumerate(val_loader):
                     ecg, text, target = data
 
                     ecg = ecg.to(device)
@@ -176,10 +178,19 @@ class Trainer:
 
             if save_name is not None:
                 wandb.log({"Train Loss" : avg_loss, "Val Loss" : avg_val_loss}, step=epoch + 1)
+            
+            # Calculate elapsed time
+            elapsed_time = time.time() - start_time
+            hours = int(elapsed_time // 3600)
+            minutes = int((elapsed_time % 3600) // 60)
+            
+            # Print elapsed time
+            print(f"Elapsed time: {hours} hours and {minutes} minutes.")
 
             ecg_model.train()
         
         print(f"Finished pre-training {ecg_model.name}.")
+        print(f"Elapsed time: {hours} hours and {minutes} minutes.")
 
         if save_name is not None:
             save_path = os.path.join(os.getcwd(), "saved_models", save_name)
