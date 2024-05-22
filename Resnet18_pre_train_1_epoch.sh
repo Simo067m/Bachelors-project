@@ -2,7 +2,7 @@
 # Ask for hpc queue
 #BSUB -q hpc
 # Name the job
-#BSUB -J pre_train_resnet18_50_epochs
+#BSUB -J pre_train_resnet18_1_epochs
 # Ask for memory
 #BSUB -R "rusage[mem=8GB]"
 # Add walltime
