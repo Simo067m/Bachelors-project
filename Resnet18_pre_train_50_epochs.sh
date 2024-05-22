@@ -11,7 +11,7 @@
 # Add number of cores
 #BSUB -n 4
 # Specify number of hosts
-#BSUB -R "span[hosts=1]"
+##BSUB -R "span[hosts=1]"
 # Name output file
 #BSUB -o pre_train_resnet_output_%J.out
 # Get an email when execution ends
