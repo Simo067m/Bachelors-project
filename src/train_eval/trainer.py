@@ -4,7 +4,9 @@ This script contains the Trainer class which is used to train and evaluate the m
 
 import torch
 from tqdm import tqdm
+import numpy as np
 import wandb
+import os
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from torcheval.metrics.functional import multiclass_f1_score
 
@@ -12,21 +14,8 @@ class Trainer:
     """
     Class to train and evaluate torch.nn models.
     """
-    def __init__(self, log_wandb : bool = False, wandb_configs : object = None, save_model : bool = False):
-        self.log_wandb = log_wandb
-        self.save_model = save_model
-        if self.log_wandb:
-            wandb.init(
-                project="Feature-Testing",
-
-                config={
-                    "learning_rate" : 0.002,
-                    "weight_decay" : 0.00001,
-                    "architecture" : "ResNet-18",
-                    "dataset" : "PTB-XL",
-                    "epochs" : 100,
-                }
-            )
+    def __init__(self):
+        pass
     def train(self, model, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_path = None):
         """
         Trains the model using the provided training data.
@@ -129,26 +118,30 @@ class Trainer:
         print(f"Accuracy: {accuracy:.2f}")
         print(f"F1 Score: {f1:.2f}")
 
-    def ecg_encoder_pre_train(self, ecg_model, text_model, train_loader, num_epochs, optimizer, criterion, device, save_path = None):
+    def ecg_encoder_pre_train(self, ecg_model, text_model, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_name = None):
         """
         Pre-trains the ecg encoder.
         Only the ecg model weights are trained, as the pre-trained text model weights are frozen.
         """
         losses = []
-
+        val_losses = []
+        ecg_model.train()
+        text_model.eval() # Text model is frozen
         for epoch in range(num_epochs):
             running_loss = 0.0
             
             for i, data in tqdm(enumerate(train_loader), desc=f"Epoch {epoch + 1} / {num_epochs}", total=len(train_loader)):
                 ecg, text, target = data
-                text.to(device)
+
                 ecg = ecg.to(device)
                 target = target.to(device)
 
                 optimizer.zero_grad()
 
                 ecg_output = ecg_model(ecg)
-                text_output = text_model(text).to(device) # Text was on cpu but needs to be on the same device as the ecg model
+
+                with torch.no_grad():  # Ensure the text model does not backpropagate gradients
+                    text_output = text_model(text).to(device)  # Get text embeddings
 
                 loss = criterion(ecg_output, text_output)
 
@@ -157,13 +150,77 @@ class Trainer:
 
                 running_loss += loss.item()
 
-            losses.append(running_loss / len(train_loader))
+            avg_loss = running_loss / len(train_loader)
+            losses.append(avg_loss)
+
+            # Validation step
+            ecg_model.eval()
+            val_running_loss = 0.0
+            with torch.no_grad():
+                for i, data in tqdm(enumerate(val_loader), desc=f"Validation {epoch + 1} / {num_epochs}", total=len(val_loader)):
+                    ecg, text, target = data
+
+                    ecg = ecg.to(device)
+                    target = target.to(device)
+
+                    ecg_output = ecg_model(ecg)
+                    text_output = text_model(text).to(device)  # Get text embeddings
+
+                    val_loss = criterion(ecg_output, text_output)
+                    val_running_loss += val_loss.item()
+
+            avg_val_loss = val_running_loss / len(val_loader)
+            val_losses.append(avg_val_loss)
+            
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {avg_loss:.4f}, Val Loss: {avg_val_loss:.4f}")
+
+            if save_name is not None:
+                wandb.log({"Epoch" : epoch + 1, "Train Loss" : avg_loss, "Val Loss" : avg_val_loss})
+
+            ecg_model.train()
         
         print(f"Finished pre-training {ecg_model.name}.")
 
-        if save_path is not None:
+        if save_name is not None:
+            save_path = os.path.join(os.getcwd(), "saved_models", save_name)
             torch.save(ecg_model.state_dict(), save_path)
             print(f"Model saved at {save_path}.")
         
-        return losses
+        return losses, val_losses
 
+    # From chat_gpt
+    def evaluate_ecg_encoder(self, ecg_model, text_model, test_loader, device):
+        """
+        Evaluates the ECG encoder by comparing its embeddings with text embeddings.
+        """
+        ecg_model.eval()
+        text_model.eval()
+        
+        similarities = []
+        correct = 0
+        total = 0
+
+        with torch.no_grad():
+            for i, data in tqdm(enumerate(test_loader), desc="Evaluating", total=len(test_loader)):
+                ecg, text, target = data
+                ecg = ecg.to(device)
+                
+                ecg_output = ecg_model(ecg)
+                text_output = text_model(text).to(device)
+
+                # Calculate cosine similarity
+                similarity = torch.nn.functional.cosine_similarity(ecg_output, text_output, dim=-1)
+                similarities.append(similarity.cpu().numpy())
+
+                # Evaluate using a simple threshold
+                preds = (similarity > 0.5).float()  # Example threshold for positive pair classification
+                correct += (preds == target.to(device)).sum().item()
+                total += target.size(0)
+        
+        avg_similarity = np.mean(np.concatenate(similarities))
+        accuracy = correct / total
+        
+        print(f"Average Similarity: {avg_similarity:.4f}")
+        print(f"Accuracy: {accuracy:.4f}")
+        
+        return avg_similarity, accuracy
