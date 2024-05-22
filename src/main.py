@@ -132,6 +132,7 @@ if __name__ == "__main__":
                 "text_model" : text_model_name,
                 "dataset" : dataset_name,
                 "epochs" : args.run_config["epochs"],
+                "architecture" : "ETP"
             }
         )
         print(f"Logging to wandb project {args.wandb_project}.")
