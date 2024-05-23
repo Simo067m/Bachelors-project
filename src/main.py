@@ -128,7 +128,6 @@ if __name__ == "__main__":
         wandb.init(
             project=args.wandb_project,
             name=f"{args.run_config['task']}_ECG_{ecg_model_name}_Text_{text_model_name}_{dataset_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
-            settings=wandb.Settings(_disable_stats=True),
             config={
                 "learning_rate" : configs.learning_rate,
                 "weight_decay" : configs.weight_decay,
@@ -170,6 +169,13 @@ if __name__ == "__main__":
 
         # Evaluate the model
         avg_similarity, accuracy = trainer.evaluate_ecg_encoder(ecg_model, text_model, test_loader, device)
+    
+    elif args.run_config["task"] == "linear_classifier":
+        print(f"Training linear classifier for {args.run_config['epochs']} epochs.")
+        print(f"Using pre-trained ECG model: {args.run_config['pre_trained_ecg_model']}")
+
+        # Load the pre-trained ECG model
+        ecg_model.load_state_dict(torch.load("saved_models/"+args.run_config["pre_trained_ecg_model"]))
 
 
     print("Done!")
