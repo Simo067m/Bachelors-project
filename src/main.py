@@ -1,7 +1,6 @@
 # Import packages
 import argparse
 import os
-import wandb
 import torch
 import datetime
 
@@ -125,9 +124,11 @@ if __name__ == "__main__":
 
     # Specify the wandb configurations
     if args.log_wandb:
+        import wandb
         wandb.init(
             project=args.wandb_project,
             name=f"{args.run_config['task']}_ECG_{ecg_model_name}_Text_{text_model_name}_{dataset_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
+            settings=wandb.Settings(_disable_stats=True),
             config={
                 "learning_rate" : configs.learning_rate,
                 "weight_decay" : configs.weight_decay,
