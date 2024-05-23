@@ -8,12 +8,17 @@ import datetime
 from dataloader.ptb_xl import ptb_xl_data_generator
 from models.clinical_bert import bio_clinical_BERT
 from models.resnet import ResNet, ResidualBlock
+from models.linear_classifier import LinearClassifier
 from train_eval.trainer import Trainer
 from train_eval.loss import NTXent_loss
 
 # Remove irrelevant pytorch storage warning
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+
+# Set seed for reproducibility
+seed = 42
+torch.manual_seed(seed)
 
 def parse_args():
 
@@ -176,6 +181,19 @@ if __name__ == "__main__":
 
         # Load the pre-trained ECG model
         ecg_model.load_state_dict(torch.load("saved_models/"+args.run_config["pre_trained_ecg_model"]))
+
+        # Define the classifier
+        classifier = LinearClassifier(configs).to(device)
+
+        # Define the optimizer and criterion
+        optimizer = torch.optim.Adam(classifier.parameters(), lr=configs.learning_rate, weight_decay=configs.weight_decay)
+        criterion = torch.nn.CrossEntropyLoss()
+
+        # Train the model
+        losses, val_losses = trainer.train_linear_classifier(ecg_model, text_model, classifier, train_loader, val_loader, int(args.run_config["epochs"]), optimizer, criterion, device, save_name = args.run_config["save_name"])
+
+        # Evaluate the model
+        accuracy, f1_score = trainer.test_linear_classifier(ecg_model, text_model, classifier, test_loader, device)
 
 
     print("Done!")
