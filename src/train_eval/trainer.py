@@ -165,7 +165,7 @@ class Trainer:
 
                 loss = criterion(output, target)
 
-                loss.bacwkard()
+                loss.backward()
                 optimizer.step()
 
                 running_loss += loss.item()

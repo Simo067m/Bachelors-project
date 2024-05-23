@@ -101,7 +101,7 @@ if __name__ == "__main__":
     if args.text_model == "bioclinicalbert":
         text_model_name = "BioClinicalBERT"
         
-        # Define text model variables TODO: Add this to the argparser
+        # Define text model variables
         text_model = bio_clinical_BERT()
 
     # Load the ECG model
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         Downstream tasks: Batch size: 32
         """
 
-        # Define ECG model variables TODO: Add this to the argparser
+        # Define ECG model variables
         ecg_model = ResNet(configs.in_channels, configs.num_classes, 18, ResidualBlock).to(device)
     
     elif args.ecg_model == "resnet34":
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     print(f"Selected epochs: {args.run_config['epochs']}")
     # Make save_name "None" if not specified
     if "save_name" not in args.run_config:
-        args.run_config["save_name"] = None
+        args.run_config["save_name"] = None # Does not save a model if the save name is of type None
     print(f"Save name: {args.run_config['save_name']}")
     
     # Print names of the selected models
