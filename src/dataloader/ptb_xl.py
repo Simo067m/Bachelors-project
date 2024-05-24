@@ -10,9 +10,6 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import StratifiedShuffleSplit
 from torch.utils.data import random_split
 
-# Seed for reproducibility (Current use: random_split)
-seed = 42
-torch.manual_seed = 42
 # Define classes for loading each dataset
 
 class ptb_xl_processor():
