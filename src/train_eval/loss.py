@@ -74,3 +74,33 @@ class NTXent_loss(nn.Module):
         total_loss = (loss + loss_rev) / (2 * self.batch_size)
 
         return total_loss
+    
+class NTXent_loss_new(nn.Module):
+    def __init__(self, batch_size):
+        super(NTXent_loss_new, self).__init__()
+        self.batch_size = batch_size
+
+    def forward(self, tensor1, tensor2):
+        # Compute cosine similarity for each pair in the batch
+        similarity_matrix = F.cosine_similarity(tensor1.unsqueeze(1), tensor2.unsqueeze(0), dim=2)
+
+        # Exclude diagonal elements (similarity between tensors with the same index)
+        mask = torch.eye(self.batch_size, dtype=torch.bool)
+        non_diag_similarities = similarity_matrix[~mask].view(self.batch_size, self.batch_size - 1)
+
+        # Positive similarities: diagonal elements
+        pos_sim = similarity_matrix.diag()
+
+        # Compute loss in a numerically stable manner
+        temperature = 0.07
+
+        # Numerator for each positive pair
+        numerator = torch.exp(pos_sim / temperature)
+
+        # Denominator: logsumexp for each positive pair's negative similarities
+        denominator = torch.logsumexp(non_diag_similarities / temperature, dim=1)
+
+        # Compute the loss
+        loss = -torch.mean(numerator - denominator)
+
+        return loss
