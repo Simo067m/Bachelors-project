@@ -17,107 +17,6 @@ class Trainer:
     """
     def __init__(self):
         pass
-    def train(self, model, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_path = None):
-        """
-        Trains the model using the provided training data.
-
-        Args:
-            model (torch.nn.Module): The model to be trained.
-            train_loader (torch.utils.data.DataLoader): The data loader for the training data.
-            epochs (int): The number of epochs to train the model.
-            optimizer (torch.optim.Optimizer): The optimizer used for training.
-            criterion (torch.nn.Module): The loss function used for training.
-            device (str): The device to be used for training (e.g., 'cpu', 'cuda').
-
-        Returns:
-            None
-        """
-
-        # Train the model
-
-        total_loss = []
-        for epoch in range(num_epochs):
-            # Set model to train
-            model.train()
-            running_loss = 0.0
-
-            for i, data in tqdm(enumerate(train_loader, 0), desc=f'Epoch {epoch + 1}/{num_epochs}', total=len(train_loader)):
-                # Get the inputs and labels
-                inputs, labels = data
-
-                # Move the inputs and labels to the device
-                inputs, labels = inputs.to(device), labels.to(device)
-
-                # Zero the parameter gradients
-                optimizer.zero_grad()
-
-                # Forward pass
-                outputs = model(inputs)
-
-                # Compute loss
-                loss = criterion(outputs, labels)
-                
-                # Backward pass
-                loss.backward()
-                optimizer.step()
-
-                # Print statistics
-                running_loss += loss.item()
-            
-            model.eval()
-            total_correct = 0
-            total_samples = 0
-            with torch.no_grad():
-                for i, data in enumerate(val_loader):
-                    inputs, labels = data
-                    inputs, labels = inputs.to(device), labels.to(device)
-                    _, predicted = torch.max(model(inputs), 1)
-                    total_samples += labels.size(0)
-                    total_correct += (predicted == labels).sum().item()
-                
-            print(f"Epoch {epoch + 1} Loss: {running_loss/77:.4f}")
-            print(f"Validation accuracy: {total_correct/total_samples:.2f}")
-            if self.log_wandb:
-                wandb.log({"Loss" : running_loss/77, "Validation Accuracy" : total_correct/total_samples})
-            
-            total_loss.append(running_loss)
-        print("Finished Training")
-        if save_path is not None:
-            torch.save(model.state_dict(), save_path)
-        return total_loss
-    
-    def test(self, model, test_loader, device):
-        """
-        Tests the model using the provided test data.
-        """
-        model.eval()
-        total_correct = 0
-        total_samples = 0
-        with torch.no_grad():
-            for i, data in enumerate(test_loader):
-                inputs, labels = data
-                inputs, labels = inputs.to(device), labels.to(device)
-                _, predicted = torch.max(model(inputs), 1)
-                total_samples += labels.size(0)
-                total_correct += (predicted == labels).sum().item()
-        print(f"Test accuracy: {total_correct/total_samples:.2f}")
-
-        all_predictions = []
-        all_labels = []
-        with torch.no_grad():
-            for data in test_loader:
-                inputs, labels = data
-                inputs, labels = inputs.to(device), labels.to(device)
-                outputs = model(inputs)
-                predictions = torch.argmax(outputs, 1).cpu().numpy()
-                all_predictions.extend(predictions)
-                all_labels.extend(labels.cpu().numpy())
-        
-        accuracy = accuracy_score(all_labels, all_predictions)
-        f1 = multiclass_f1_score(torch.tensor(all_predictions), torch.tensor(all_labels), num_classes=5, average="macro")
-
-        print(f"Accuracy: {accuracy:.2f}")
-        print(f"F1 Score: {f1:.2f}")
 
     def ecg_encoder_pre_train(self, ecg_model, text_model, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_name = None):
         """
@@ -235,3 +134,122 @@ class Trainer:
         print(f"Accuracy: {accuracy:.4f}")
         
         return avg_similarity, accuracy
+    
+    def train_linear_classifier(self, ecg_model, text_model, classifier, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_name = None):
+        """
+        Trains the linear classifier using the embeddings from the ECG and text models.
+        Since both the ECG and text models are pre-trained, only the weights of the classifier are trained.
+        """
+        start_time = time.time()
+        losses = []
+        val_losses = []
+
+        classifier.train()
+
+        for epoch in range(num_epochs):
+            running_loss = 0.0
+            
+            for i, data in enumerate(train_loader):
+                ecg, text, target = data
+
+                ecg = ecg.to(device)
+                target = target.to(device)
+
+                optimizer.zero_grad()
+
+                with torch.no_grad():
+                    ecg_output = ecg_model(ecg)
+                    text_output = text_model(text).to(device)
+
+                output = classifier(ecg_output, text_output)
+
+                loss = criterion(output, target)
+
+                loss.backward()
+                optimizer.step()
+
+                running_loss += loss.item()
+            
+            avg_loss = running_loss / len(train_loader)
+            losses.append(avg_loss)
+
+            # Validation step
+            classifier.eval()
+            val_running_loss = 0.0
+            with torch.no_grad():
+                for i, data in enumerate(val_loader):
+                    ecg, text, target = data
+
+                    ecg = ecg.to(device)
+                    target = target.to(device)
+
+                    ecg_output = ecg_model(ecg)
+                    text_output = text_model(text).to(device)
+
+                    output = classifier(ecg_output, text_output)
+
+                    val_loss = criterion(output, target)
+                    val_running_loss += val_loss.item()
+
+            avg_val_loss = val_running_loss / len(val_loader)
+            val_losses.append(avg_val_loss)
+
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {avg_loss:.4f}, Val Loss: {avg_val_loss:.4f}")
+
+            if save_name is not None:
+                wandb.log({"Train Loss" : avg_loss, "Val Loss" : avg_val_loss}, step=epoch + 1)
+            
+            # Calculate elapsed time
+            elapsed_time = time.time() - start_time
+            hours = int(elapsed_time // 3600)
+            minutes = int((elapsed_time % 3600) // 60)
+            
+            # Print elapsed time
+            print(f"Elapsed time: {hours} hours and {minutes} minutes.")
+
+            classifier.train()
+
+        print(f"Finished training {classifier.name}.")
+        print(f"Elapsed time: {hours} hours and {minutes} minutes.")
+
+        if save_name is not None:
+            save_path = os.path.join(os.getcwd(), "saved_models", save_name)
+            torch.save(ecg_model.state_dict(), save_path)
+            print(f"Model saved at {save_path}.")
+        
+        return losses, val_losses
+        
+    def test_linear_classifier(self, ecg_model, text_model, classifier, test_loader, device):
+        """
+        Tests the linear classifier.
+        """
+        classifier.eval()
+        correct = 0
+        total = 0
+        y_true = []
+        y_pred = []
+
+        with torch.no_grad():
+            for i, data in tqdm(enumerate(test_loader), desc="Testing", total=len(test_loader)):
+                ecg, text, target = data
+                ecg = ecg.to(device)
+                target = target.to(device)
+
+                ecg_output = ecg_model(ecg)
+                text_output = text_model(text).to(device)
+
+                output = classifier(ecg_output, text_output)
+
+                _, predicted = torch.max(output.data, 1)
+                y_true.extend(target.cpu().numpy())
+                y_pred.extend(predicted.cpu().numpy())
+
+                total += target.size(0)
+                correct += (predicted == target).sum().item()
+
+        accuracy = correct / total
+        f1 = f1_score(y_true, y_pred, average="macro")
+        print(f"Accuracy: {accuracy:.4f}")
+        print(f"F1 Score: {f1:.4f}")
+
+        return accuracy, f1

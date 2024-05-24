@@ -77,6 +77,9 @@ class ptb_xl_processor():
             
             X_ecg, X_text = self.load_raw_data(Y)
 
+            # Standardize the ecg data
+            X_ecg = self.min_max_scale(X_ecg)
+
             Y.to_csv("Datasets/ptb-xl/saved_splits/data.csv", index=False)
             with open("Datasets/ptb-xl/saved_splits/text_reports.txt", "w") as f:
                 for report in X_text:
@@ -164,6 +167,21 @@ class ptb_xl_processor():
                 data = data.drop(idx)
 
         return data
+
+    def min_max_scale(self, data : torch.Tensor):
+        """
+        Scales the data to be between 0 and 1 for each signal independently.
+        
+        Parameters:
+        data (torch.Tensor): The input data to scale.
+        
+        Returns:
+        torch.Tensor: The scaled data.
+        """
+        min_val, _ = data.min(dim=2, keepdim=True)
+        max_val, _ = data.max(dim=2, keepdim=True)
+        scaled_data = (data - min_val) / (max_val - min_val)
+        return scaled_data
 
     def split_equal_distribution(self, data):
         """
