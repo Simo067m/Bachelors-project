@@ -10,6 +10,7 @@ import os
 import time
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from torcheval.metrics.functional import multiclass_f1_score
+from utils.utils import check_sims
 
 class Trainer:
     """
@@ -17,6 +18,23 @@ class Trainer:
     """
     def __init__(self):
         pass
+
+    def log_metrics(self, epoch, train_loss, val_loss, avg_train_diag_similarity, avg_train_non_diag_similarity, avg_val_diag_similarity, avg_val_non_diag_similarity):
+        metrics = {
+            'Training': {
+                'Loss': train_loss,
+                'Average positive pair similarity': avg_train_diag_similarity,
+                'Average negative pair similarity': avg_train_non_diag_similarity
+            },
+            'validation': {
+                'Loss': val_loss,
+                'Average positive pair similarity': avg_val_diag_similarity,
+                'Average negative pair similarity': avg_val_non_diag_similarity
+            }
+        }
+    
+        # Log the metrics to wandb
+        wandb.log(metrics, step=epoch)
 
     def ecg_encoder_pre_train(self, ecg_model, text_model, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_name = None):
         """
@@ -26,11 +44,16 @@ class Trainer:
         start_time = time.time()
         losses = []
         val_losses = []
+        avg_diag_similarities = []
+        avg_non_diag_similarities = []
+        val_avg_diag_similarities = []
+        val_avg_non_diag_similarities = []
         ecg_model.train()
         text_model.eval() # Text model is frozen
         for epoch in range(num_epochs):
             running_loss = 0.0
-            
+            running_avg_non_diag_similarity = 0.0
+            running_avg_diag_similarity = 0.0
             for i, data in enumerate(train_loader):
                 ecg, text, target = data
 
@@ -48,15 +71,26 @@ class Trainer:
 
                 loss.backward()
                 optimizer.step()
-
+                
                 running_loss += loss.item()
+
+                avg_non_diag_similarity, avg_diag_similarity = check_sims(train_loader.batch_size, ecg_output, text_output)
+                running_avg_non_diag_similarity += avg_non_diag_similarity
+                running_avg_diag_similarity += avg_diag_similarity
+                
 
             avg_loss = running_loss / len(train_loader)
             losses.append(avg_loss)
+            avg_train_non_diag_similarity = running_avg_non_diag_similarity / len(train_loader)
+            avg_train_diag_similarity = running_avg_diag_similarity / len(train_loader)
+            avg_non_diag_similarities.append(avg_train_non_diag_similarity)
+            avg_diag_similarities.append(avg_train_diag_similarity)
 
             # Validation step
             ecg_model.eval()
             val_running_loss = 0.0
+            val_running_avg_non_diag_similarity = 0.0
+            val_running_avg_diag_similarity = 0.0
             with torch.no_grad():
                 for i, data in enumerate(val_loader):
                     ecg, text, target = data
@@ -70,14 +104,24 @@ class Trainer:
                     val_loss = criterion(ecg_output, text_output)
                     val_running_loss += val_loss.item()
 
+                    avg_non_diag_similarity, avg_diag_similarity = check_sims(val_loader.batch_size, ecg_output, text_output)
+                    val_running_avg_non_diag_similarity += avg_non_diag_similarity
+                    val_running_avg_diag_similarity += avg_diag_similarity
+                    
+
             avg_val_loss = val_running_loss / len(val_loader)
             val_losses.append(avg_val_loss)
+            avg_val_non_diag_similarity = val_running_avg_non_diag_similarity / len(val_loader)
+            avg_val_diag_similarity = val_running_avg_diag_similarity / len(val_loader)
+            val_avg_non_diag_similarities.append(avg_val_non_diag_similarity)
+            val_avg_diag_similarities.append(avg_val_diag_similarity)
             
             print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {avg_loss:.4f}, Val Loss: {avg_val_loss:.4f}")
 
             if save_name is not None:
-                wandb.log({"Train Loss" : avg_loss, "Val Loss" : avg_val_loss}, step=epoch + 1)
-            
+                #wandb.log({"Train Loss" : avg_loss, "Validation Loss" : avg_val_loss, "Validation average negative pair similarities" : avg_non_diag_similarity, "Average positive pair similarities" : avg_diag_similarity}, step=epoch + 1)
+                self.log_metrics(epoch + 1, avg_loss, avg_val_loss, avg_train_diag_similarity, avg_train_non_diag_similarity, avg_val_diag_similarity, avg_val_non_diag_similarity)
+
             # Calculate elapsed time
             elapsed_time = time.time() - start_time
             hours = int(elapsed_time // 3600)

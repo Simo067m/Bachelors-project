@@ -10,7 +10,7 @@ from models.clinical_bert import bio_clinical_BERT
 from models.resnet import ResNet, ResidualBlock
 from models.linear_classifier import LinearClassifier
 from train_eval.trainer import Trainer
-from train_eval.loss import NTXent_loss, NTXent_loss_new
+from train_eval.loss import NT_Xent_loss
 
 # Remove irrelevant pytorch storage warning
 import warnings
@@ -167,10 +167,7 @@ if __name__ == "__main__":
 
         # Define the optimizer and criterion
         optimizer = torch.optim.Adam(ecg_model.parameters(), lr=configs.learning_rate, weight_decay=configs.weight_decay)
-        if args.run_config["loss"] == "new":
-            criterion = NTXent_loss_new(configs.batch_size)
-        else:    
-            criterion = NTXent_loss(configs.batch_size, device=device)
+        criterion = NT_Xent_loss(configs.batch_size)
 
         # Train the model
         losses, val_losses = trainer.ecg_encoder_pre_train(ecg_model, text_model, train_loader, val_loader, int(args.run_config["epochs"]), optimizer, criterion, device, save_name = args.run_config["save_name"])

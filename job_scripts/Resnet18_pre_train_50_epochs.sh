@@ -13,7 +13,7 @@
 # Specify number of hosts
 #BSUB -R "span[hosts=1]"
 # Name output file
-#BSUB -o pre_train_resnet_output_%J.out
+#BSUB -o Resnet18_pre_train_50_epochs%J.out
 # Get an email when execution ends
 #BSUB -N
 
@@ -22,7 +22,6 @@ module load python3/3.11.7
 
 # Load cuda
 module load cuda/12.1
-
 
 # Activate virtual environment
 source bachelor-venv/bin/activate

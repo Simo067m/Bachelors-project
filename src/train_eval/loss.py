@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
 class NT_Xent_loss(nn.Module):
     def __init__(self, batch_size, temperature=0.07):
@@ -28,6 +27,7 @@ class NT_Xent_loss(nn.Module):
         return total_loss
 
     def compute_loss(self, similarity_matrix):
+
         # Get the similarities of the positive pairs
         positive_sims = torch.diag(similarity_matrix)
 
@@ -38,7 +38,6 @@ class NT_Xent_loss(nn.Module):
         negatives_mask = ~negatives_mask
 
         # Get the negatives using the mask
-        negative_sims = similarity_matrix[negatives_mask] # tensor
         negative_sims = similarity_matrix[negatives_mask].view(self.batch_size, -1) # matrix
 
         # Apply the temperature scaling
