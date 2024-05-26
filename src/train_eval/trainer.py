@@ -26,7 +26,7 @@ class Trainer:
                 'Average positive pair similarity': avg_train_diag_similarity,
                 'Average negative pair similarity': avg_train_non_diag_similarity
             },
-            'validation': {
+            'Validation': {
                 'Loss': val_loss,
                 'Average positive pair similarity': avg_val_diag_similarity,
                 'Average negative pair similarity': avg_val_non_diag_similarity
@@ -179,7 +179,7 @@ class Trainer:
         
         return avg_similarity, accuracy
     
-    def train_linear_classifier(self, ecg_model, text_model, classifier, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_name = None):
+    def train_linear_classifier(self, ecg_model, classifier, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_name = None):
         """
         Trains the linear classifier using the embeddings from the ECG and text models.
         Since both the ECG and text models are pre-trained, only the weights of the classifier are trained.
@@ -203,7 +203,6 @@ class Trainer:
 
                 with torch.no_grad():
                     ecg_output = ecg_model(ecg)
-                    text_output = text_model(text).to(device)
 
                 output = classifier(ecg_output, text_output)
 
@@ -228,9 +227,8 @@ class Trainer:
                     target = target.to(device)
 
                     ecg_output = ecg_model(ecg)
-                    text_output = text_model(text).to(device)
 
-                    output = classifier(ecg_output, text_output)
+                    output = classifier(ecg_output)
 
                     val_loss = criterion(output, target)
                     val_running_loss += val_loss.item()
@@ -263,7 +261,7 @@ class Trainer:
         
         return losses, val_losses
         
-    def test_linear_classifier(self, ecg_model, text_model, classifier, test_loader, device):
+    def test_linear_classifier(self, ecg_model, classifier, test_loader, device):
         """
         Tests the linear classifier.
         """
@@ -280,9 +278,8 @@ class Trainer:
                 target = target.to(device)
 
                 ecg_output = ecg_model(ecg)
-                text_output = text_model(text).to(device)
 
-                output = classifier(ecg_output, text_output)
+                output = classifier(ecg_output)
 
                 _, predicted = torch.max(output.data, 1)
                 y_true.extend(target.cpu().numpy())

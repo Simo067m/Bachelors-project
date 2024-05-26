@@ -8,12 +8,12 @@ class LinearClassifier(nn.Module):
     def __init__(self, configs):
         super().__init__()
         self.name = "LinearClassifier"
-        self.fc = nn.Linear(512 * 2, configs.num_classes)
+        self.fc = nn.Linear(512, configs.num_classes)
         self._initialize_weights()
     
-    def forward(self, ecg, text):
-        embeddings = torch.cat((ecg, text), dim=1)
-        x = self.fc(embeddings)
+    def forward(self, ecg):
+        #embeddings = torch.cat((ecg, text), dim=1)
+        x = self.fc(ecg)
         return x
     
     def _initialize_weights(self):
