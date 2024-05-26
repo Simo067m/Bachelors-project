@@ -27,7 +27,7 @@ class ptb_xl_processor():
     - X_test_text (list): Testing text data
     - y_test (list): Testing targets
     """
-    def __init__(self, path_to_dataset : str, sampling_rate : int = 100, split_method : str = "pre_split", test_fold : int = 10, val_fold : int = 9, load_raw : bool = False, load_meta : bool = False, single_label : bool = True):
+    def __init__(self, path_to_dataset : str, use_translated : bool, sampling_rate : int = 100, split_method : str = "pre_split", test_fold : int = 10, val_fold : int = 9, load_raw : bool = False, load_meta : bool = False, single_label : bool = True):
         """
         Initializes a class instance, and loads the dataset. No function calls are necessary.
 
@@ -44,6 +44,7 @@ class ptb_xl_processor():
         self.path_to_dataset = path_to_dataset
         self.sampling_rate = sampling_rate
         self.load_raw = load_raw
+        self.use_translated = use_translated
 
         if load_meta:
             self.meta = pd.read_csv(self.path_to_dataset+'ptbxl_database.csv', index_col='ecg_id')
@@ -78,19 +79,24 @@ class ptb_xl_processor():
             X_ecg = self.min_max_scale(X_ecg)
 
             Y.to_csv("Datasets/ptb-xl/saved_splits/data.csv", index=False)
-            with open("Datasets/ptb-xl/saved_splits/text_reports.txt", "w") as f:
-                for report in X_text:
-                    f.write(report + "\n")
             torch.save(torch.tensor(X_ecg, dtype=torch.float32), "Datasets/ptb-xl/saved_splits/ecg_data.pt")
         
         else:
-            Y = pd.read_csv(self.path_to_dataset + "saved_splits/data.csv")
+            if self.use_translated:
+                Y = pd.read_csv(self.path_to_dataset + "saved_splits/data_translated.csv")
+                with open("Datasets/ptb-xl/saved_splits/text_reports.txt", "w") as f:
+                    for report in Y["translated_report"]:
+                        f.write(report + "\n")
+            else:
+                Y = pd.read_csv(self.path_to_dataset + "saved_splits/data.csv")
+                with open("Datasets/ptb-xl/saved_splits/text_reports.txt", "w") as f:
+                    for report in Y["report"]:
+                        f.write(report + "\n")
             X_ecg = torch.load(self.path_to_dataset + "saved_splits/ecg_data.pt")
             with open(self.path_to_dataset + "saved_splits/text_reports.txt", "r") as f:
                 X_text = f.readlines()
                 X_text = [line.strip() for line in X_text]
             X_text = np.array(X_text)
-
 
         # Split into train and test using pytorch instead of the provided test_fold
         # Splits are chosen based on the split used in "Adversarial Spatiotemporal Contrastive Learning for Electrocardiogram Signals" (https://ieeexplore.ieee.org/document/10177892) Table 1.
@@ -240,12 +246,12 @@ class ptb_xl_dataset(Dataset):
         else:
             return self.ecg_data[idx], self.y_tensor[idx]
     
-def ptb_xl_data_generator(configs, split_method : str = "pre_split", load_raw_data : bool = False, sampling_rate : int = 100, include_text : bool = False):
+def ptb_xl_data_generator(configs, split_method : str = "pre_split", use_translated : bool = False, load_raw_data : bool = False, sampling_rate : int = 100, include_text : bool = False):
     """
     Generates the DataLoader objects for the PTB-XL dataset.
     """
     # Preprocess the data
-    preprocessed = ptb_xl_processor(configs.path_to_dataset, split_method=split_method, sampling_rate = sampling_rate, load_raw=load_raw_data)
+    preprocessed = ptb_xl_processor(configs.path_to_dataset, use_translated=use_translated, split_method=split_method, sampling_rate = sampling_rate, load_raw=load_raw_data)
     # Load the data into the dataset
     train_dataset = ptb_xl_dataset("train", configs.path_to_dataset, include_text=include_text)
     val_dataset = ptb_xl_dataset("val", configs.path_to_dataset, include_text=include_text)

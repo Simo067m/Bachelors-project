@@ -221,7 +221,7 @@ class Trainer:
             val_running_loss = 0.0
             with torch.no_grad():
                 for i, data in enumerate(val_loader):
-                    ecg, text, target = data
+                    ecg, target = data
 
                     ecg = ecg.to(device)
                     target = target.to(device)
@@ -273,7 +273,7 @@ class Trainer:
 
         with torch.no_grad():
             for i, data in tqdm(enumerate(test_loader), desc="Testing", total=len(test_loader)):
-                ecg, text, target = data
+                ecg, target = data
                 ecg = ecg.to(device)
                 target = target.to(device)
 

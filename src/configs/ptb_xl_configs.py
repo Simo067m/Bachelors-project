@@ -4,7 +4,7 @@ class Configs(object):
     """
     Configurations for the PTB-XL dataset.
     """
-    def __init__(self):
+    def __init__(self, use_translated : bool = True):
         self.in_channels = 12 # Recordings are 12-lead ECGs
         self.num_classes = 5
         self.num_classes_disease = 2
