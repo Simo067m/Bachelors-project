@@ -84,12 +84,12 @@ class ptb_xl_processor():
         else:
             if self.use_translated:
                 Y = pd.read_csv(self.path_to_dataset + "saved_splits/data_translated.csv")
-                with open("Datasets/ptb-xl/saved_splits/text_reports.txt", "w") as f:
+                with open(self.path_to_dataset + "saved_splits/text_reports.txt", "w") as f:
                     for report in Y["translated_report"]:
                         f.write(report + "\n")
             else:
                 Y = pd.read_csv(self.path_to_dataset + "saved_splits/data.csv")
-                with open("Datasets/ptb-xl/saved_splits/text_reports.txt", "w") as f:
+                with open(self.path_to_dataset + "saved_splits/text_reports.txt", "w") as f:
                     for report in Y["report"]:
                         f.write(report + "\n")
             X_ecg = torch.load(self.path_to_dataset + "saved_splits/ecg_data.pt")

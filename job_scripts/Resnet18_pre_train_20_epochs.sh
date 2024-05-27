@@ -7,7 +7,7 @@
 # Ask for memory
 #BSUB -R "rusage[mem=2GB]"
 # Add walltime
-#BSUB -W 24:00
+#BSUB -W 16:00
 # Add number of cores
 #BSUB -n 4
 # Specify number of hosts
@@ -27,4 +27,4 @@ module load cuda/12.1
 source bachelor-venv/bin/activate
 
 # Run the script
-python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18 -log-wandb -wandb-project Bachelors-project -run-config task=ECG_pre_training epochs=50 save_name=Resnet18_pre_trained_50_epochs batch-size=128
+python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18 -log-wandb -wandb-project Bachelors-project -run-config task=ECG_pre_training epochs=20 save_name=Resnet18_pre_trained_20_epochs batch-size=128

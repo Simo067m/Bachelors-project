@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 def check_sims(batch_size : int, tensor1 : torch.Tensor, tensor2 : torch.Tensor):
     """
@@ -29,3 +30,6 @@ def check_sims(batch_size : int, tensor1 : torch.Tensor, tensor2 : torch.Tensor)
     #print(f'Average Diagonal Similarity: {avg_diag_similarity.item()}')
 
     return avg_non_diag_similarity.item(), avg_diag_similarity.item()
+
+def plot_losses(losses, val_losses):
+    pass

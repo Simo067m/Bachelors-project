@@ -65,7 +65,7 @@ class BottleNeck(nn.Module):
         self.bn2 = nn.BatchNorm1d(in_channels)
         self.relu2 = nn.ReLU(inplace=True)
         
-        self.conv3 = nn.Conv1d(in_channels, out_channels * self.expansion, kernel_size=1, stride=1, padding=1, bias=False)
+        self.conv3 = nn.Conv1d(in_channels, out_channels * self.expansion, kernel_size=1, stride=1, bias=False)
         self.bn3 = nn.BatchNorm1d(out_channels * self.expansion)
         self.relu3 = nn.ReLU(inplace=True)
 

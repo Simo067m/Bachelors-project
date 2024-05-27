@@ -194,7 +194,7 @@ class Trainer:
             running_loss = 0.0
             
             for i, data in enumerate(train_loader):
-                ecg, text, target = data
+                ecg, target = data
 
                 ecg = ecg.to(device)
                 target = target.to(device)
@@ -204,7 +204,7 @@ class Trainer:
                 with torch.no_grad():
                     ecg_output = ecg_model(ecg)
 
-                output = classifier(ecg_output, text_output)
+                output = classifier(ecg_output)
 
                 loss = criterion(output, target)
 
