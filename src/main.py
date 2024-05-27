@@ -192,9 +192,9 @@ if __name__ == "__main__":
         criterion = torch.nn.CrossEntropyLoss()
 
         # Train the model
-        losses, val_losses = trainer.train_linear_classifier(ecg_model, text_model, classifier, train_loader, val_loader, int(args.run_config["epochs"]), optimizer, criterion, device, save_name = args.run_config["save_name"])
+        losses, val_losses = trainer.train_linear_classifier(ecg_model, classifier, train_loader, val_loader, int(args.run_config["epochs"]), optimizer, criterion, device, save_name = args.run_config["save_name"])
 
         # Evaluate the model
-        accuracy, f1_score = trainer.test_linear_classifier(ecg_model, text_model, classifier, test_loader, device)
+        accuracy, f1_score = trainer.test_linear_classifier(ecg_model, classifier, test_loader, device)
 
     print("Done!")
