@@ -89,13 +89,13 @@ if __name__ == "__main__":
         
         # Import configs
         from configs.ptb_xl_configs import Configs
-        configs = Configs(args.run_config["batch-size"])
+        configs = Configs(int(args.run_config["batch-size"]))
 
         # Define dataset variables
         if args.run_config["task"] == "ECG_pre_training":
             train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, use_translated=True, load_raw_data=args.load_raw_data, include_text=True)
         else:
-            train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, load_raw_data=args.load_raw_data)
+            train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, use_translated=True, load_raw_data=args.load_raw_data)
         
     
     # Load the text model

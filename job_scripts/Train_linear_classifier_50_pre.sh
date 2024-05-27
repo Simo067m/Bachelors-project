@@ -3,7 +3,7 @@
 #BSUB -q gpuv100
 #BSUB -gpu "num=1:mode=exclusive_process"
 # Name the job
-#BSUB -J pre_train_resnet18_50_epochs
+#BSUB -J Train_linear_classifier_50_pre
 # Ask for memory
 #BSUB -R "rusage[mem=2GB]"
 # Add walltime
@@ -13,7 +13,7 @@
 # Specify number of hosts
 #BSUB -R "span[hosts=1]"
 # Name output file
-#BSUB -o Resnet18_pre_train_50_epochs%J.out
+#BSUB -o Linear_Classifier_50_epochs_pre%J.out
 # Get an email when execution ends
 #BSUB -N
 
