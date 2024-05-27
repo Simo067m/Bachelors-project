@@ -49,6 +49,8 @@ def parse_args():
     - task: ECG_pre_training, linear_classifier
     - epochs: int
     - save_name: str to save the model
+    - batch_size: int
+    - pre_trained_ecg_model: str
     """
 
     return parser.parse_args()
@@ -87,7 +89,7 @@ if __name__ == "__main__":
         
         # Import configs
         from configs.ptb_xl_configs import Configs
-        configs = Configs()
+        configs = Configs(args.run_config["batch-size"])
 
         # Define dataset variables
         if args.run_config["task"] == "ECG_pre_training":
@@ -175,7 +177,7 @@ if __name__ == "__main__":
         # Evaluate the model
         avg_similarity, accuracy = trainer.evaluate_ecg_encoder(ecg_model, text_model, test_loader, device)
     
-    elif args.run_config["task"] == "linear_classifier":
+    elif args.run_config["task"] == "train_linear_classifier":
         print(f"Training linear classifier for {args.run_config['epochs']} epochs.")
         print(f"Using pre-trained ECG model: {args.run_config['pre_trained_ecg_model']}")
 
@@ -194,6 +196,5 @@ if __name__ == "__main__":
 
         # Evaluate the model
         accuracy, f1_score = trainer.test_linear_classifier(ecg_model, text_model, classifier, test_loader, device)
-
 
     print("Done!")
