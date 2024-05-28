@@ -8,6 +8,7 @@ import datetime
 from dataloader.ptb_xl import ptb_xl_data_generator
 from models.clinical_bert import bio_clinical_BERT
 from models.resnet import ResNet, ResidualBlock
+from models.resnet2D import ModifiedResNet1D
 from models.linear_classifier import LinearClassifier
 from train_eval.trainer import Trainer
 from train_eval.loss import NT_Xent_loss
@@ -124,10 +125,15 @@ if __name__ == "__main__":
     
     elif args.ecg_model == "resnet34":
         ecg_model_name = "ResNet-34"
-        print("ResNet-34 ECG model selected.")
         
-        # Define ECG model variables TODO: Add this to the argparser
+        # Define ECG model variables
         ecg_model = ResNet(configs.in_channels, configs.num_classes, 34, ResidualBlock).to(device)
+    
+    elif args.ecg_model == "resnet18-bottleneck":
+        ecg_model_name = "ResNet-18-BottleNeck"
+
+        # Define ECG model variables
+        ecg_model = ModifiedResNet1D(layers=[2, 2, 2, 2], output_dim=configs.num_classes, heads=8, input_resolution=1000, width=64)
 
     # Specify the wandb configurations
     if args.log_wandb:
