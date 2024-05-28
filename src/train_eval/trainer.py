@@ -150,9 +150,8 @@ class Trainer:
         ecg_model.eval()
         text_model.eval()
         
-        similarities = []
-        correct = 0
-        total = 0
+        running_avg_non_diag_similarity = 0.0
+        running_avg_diag_similarity = 0.0
 
         with torch.no_grad():
             for i, data in tqdm(enumerate(test_loader), desc="Evaluating", total=len(test_loader)):
@@ -162,22 +161,17 @@ class Trainer:
                 ecg_output = ecg_model(ecg)
                 text_output = text_model(text).to(device)
 
-                # Calculate cosine similarity
-                similarity = torch.nn.functional.cosine_similarity(ecg_output, text_output, dim=-1)
-                similarities.append(similarity.cpu().numpy())
+                avg_non_diag_similarity, avg_diag_similarity = check_sims(test_loader.batch_size, ecg_output, text_output)
+                running_avg_non_diag_similarity += avg_non_diag_similarity
+                running_avg_diag_similarity += avg_diag_similarity
+        
+        avg_non_diag_similarity = running_avg_non_diag_similarity / len(test_loader)
+        avg_diag_similarity = running_avg_diag_similarity / len(test_loader)
 
-                # Evaluate using a simple threshold
-                preds = (similarity > 0.5).float()  # Example threshold for positive pair classification
-                correct += (preds == target.to(device)).sum().item()
-                total += target.size(0)
+        print(f"Average Non-Diagonal Similarity: {avg_non_diag_similarity:.4f}")
+        print(f"Average Diagonal Similarity: {avg_diag_similarity:.4f}")
         
-        avg_similarity = np.mean(np.concatenate(similarities))
-        accuracy = correct / total
-        
-        print(f"Average Similarity: {avg_similarity:.4f}")
-        print(f"Accuracy: {accuracy:.4f}")
-        
-        return avg_similarity, accuracy
+        return avg_non_diag_similarity, avg_diag_similarity
     
     def train_linear_classifier(self, ecg_model, classifier, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_name = None):
         """
