@@ -246,7 +246,7 @@ class ptb_xl_dataset(Dataset):
         else:
             return self.ecg_data[idx], self.y_tensor[idx]
     
-def ptb_xl_data_generator(configs, split_method : str = "pre_split", use_translated : bool = False, load_raw_data : bool = False, sampling_rate : int = 100, include_text : bool = False):
+def ptb_xl_data_generator(configs, split_method : str = "pre_split", use_translated : bool = True, load_raw_data : bool = False, sampling_rate : int = 100, include_text : bool = False):
     """
     Generates the DataLoader objects for the PTB-XL dataset.
     """
