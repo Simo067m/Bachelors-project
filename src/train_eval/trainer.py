@@ -142,7 +142,6 @@ class Trainer:
         
         return losses, val_losses
 
-    # From chat_gpt
     def evaluate_ecg_encoder(self, ecg_model, text_model, test_loader, device):
         """
         Evaluates the ECG encoder by comparing its embeddings with text embeddings.
@@ -250,7 +249,7 @@ class Trainer:
 
         if save_name is not None:
             save_path = os.path.join(os.getcwd(), "saved_models", save_name)
-            torch.save(ecg_model.state_dict(), save_path)
+            torch.save(classifier.state_dict(), save_path)
             print(f"Model saved at {save_path}.")
         
         return losses, val_losses
