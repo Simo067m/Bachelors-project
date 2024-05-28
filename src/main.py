@@ -39,6 +39,7 @@ def parse_args():
     ecg_model = parser.add_mutually_exclusive_group()
     ecg_model.add_argument("-resnet18", action="store_const", help="ResNet18 model", dest="ecg_model", const="resnet18")
     ecg_model.add_argument("-resnet34", action="store_const", help="ResNet34 model", dest="ecg_model", const="resnet34")
+    ecg_model.add_argument("-resnet18-bottleneck", action="store_const", help="ResNet18 with bottleneck model", dest="ecg_model", const="resnet18-bottleneck")
 
     parser.add_argument("-log-wandb", action="store_true", default=False, help="Log data to wandb", dest="log_wandb")
     parser.add_argument("-wandb-project", type=str, help="Wandb project name")
