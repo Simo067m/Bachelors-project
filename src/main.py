@@ -134,7 +134,7 @@ if __name__ == "__main__":
         ecg_model_name = "ResNet-18-BottleNeck"
 
         # Define ECG model variables
-        ecg_model = ModifiedResNet1D(layers=[2, 2, 2, 2], output_dim=configs.num_classes, heads=8, input_resolution=1000, width=64)
+        ecg_model = ModifiedResNet1D(layers=[2, 2, 2, 2], output_dim=configs.num_classes, heads=8, input_resolution=1000, width=64).to(device)
 
     # Specify the wandb configurations
     if args.log_wandb:
