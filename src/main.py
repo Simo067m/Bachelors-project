@@ -179,10 +179,28 @@ if __name__ == "__main__":
         criterion = NT_Xent_loss(configs.batch_size)
 
         # Train the model
-        losses, val_losses = trainer.ecg_encoder_pre_train(ecg_model, text_model, train_loader, val_loader, int(args.run_config["epochs"]), optimizer, criterion, device, save_name = args.run_config["save_name"])
+        losses, val_losses, avg_negative_similarities, avg_positive_similarities, val_avg_negative_similarities, val_avg_positive_similarities = trainer.ecg_encoder_pre_train(ecg_model, text_model, 
+                                                            train_loader, val_loader, int(args.run_config["epochs"]), optimizer, criterion, device, save_name = args.run_config["save_name"])
 
         # Evaluate the model
-        avg_similarity, accuracy = trainer.evaluate_ecg_encoder(ecg_model, text_model, test_loader, device)
+        test_avg_negative_similarity, test_avg_positive_similarity = trainer.evaluate_ecg_encoder(ecg_model, text_model, test_loader, device)
+
+        # Save the run returns
+        run_returns = {
+            "losses" : losses,
+            "val_losses" : val_losses,
+            "avg_negative_similarities" : avg_negative_similarities,
+            "avg_positive_similarities" : avg_positive_similarities,
+            "val_avg_negative_diag_similarities" : val_avg_negative_similarities,
+            "val_avg_positive,similarities" : val_avg_positive_similarities,
+            "test_avg_negative_similarity" : test_avg_negative_similarity,
+            "test_avg_positive_similarity" : test_avg_positive_similarity
+        }
+
+        if not os.path.exists(os.path.join(os.getcwd(), "run_returns")):
+            os.makedirs(os.path.join(os.getcwd(), "run_returns"))
+        
+        torch.save(run_returns, os.path.join(os.getcwd(), "run_returns", f"{args.run_config['save_name']}_run_returns.pt"))
     
     elif args.run_config["task"] == "train_linear_classifier":
         print(f"Training linear classifier for {args.run_config['epochs']} epochs.")

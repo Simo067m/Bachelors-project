@@ -35,9 +35,8 @@ class bio_clinical_BERT(nn.Module):
         """
         Returns the embeddings of the encoded output.
         """
-        with torch.no_grad():
-            output = self.model(**encoded_output)
-            embeddings = output.last_hidden_state.mean(dim=1)
+        output = self.model(**encoded_output)
+        embeddings = output.last_hidden_state.mean(dim=1)
 
         return embeddings
     
@@ -54,7 +53,8 @@ class bio_clinical_BERT(nn.Module):
             """
 
             # encoded_output = self.encode(text, add_special_tokens)
-            encoded_output = self.encode(text, add_special_tokens)
-            embeddings = self.embed(encoded_output)
-            text_proj = self.linear_proj(embeddings)
+            with torch.no_grad():
+                encoded_output = self.encode(text, add_special_tokens)
+                embeddings = self.embed(encoded_output)
+                text_proj = self.linear_proj(embeddings)
             return text_proj
