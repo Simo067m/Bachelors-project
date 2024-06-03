@@ -5,11 +5,12 @@ import math
 
 class LinearClassifier(nn.Module):
 
-    def __init__(self, configs):
+    def __init__(self, configs, random_init = True):
         super().__init__()
         self.name = "LinearClassifier"
         self.fc = nn.Linear(512, configs.num_classes)
-        self._initialize_weights()
+        if random_init:
+            self._initialize_weights()
     
     def forward(self, ecg):
         #embeddings = torch.cat((ecg, text), dim=1)

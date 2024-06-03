@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from sklearn.metrics import f1_score, roc_auc_score
 
 class ZeroShotClassifier():
     """
@@ -9,8 +10,9 @@ class ZeroShotClassifier():
 
     Prompts need to include "{}" brackets which will be filled in with the relevant text value based on the task.
     """
-    def __init__(self):
-        self.label_map = {0 : "CD", 1 : "HYP", 2 : "MI", 3 : "NORM", 4 : "STTC"}
+    def __init__(self, dataset : str):
+        if dataset == "ptb-xl":
+            self.label_map = {0 : "CD", 1 : "HYP", 2 : "MI", 3 : "NORM", 4 : "STTC"}
     
     def fill_sentence(self, prompt : str, word_to_fill : str):
         """
@@ -35,44 +37,65 @@ class ZeroShotClassifier():
         positive_embeddings = {prompt : text_model(prompt).to(device) for prompt in possible_positive_prompts}
         negative_embeddings = {prompt : text_model(prompt).to(device) for prompt in possible_negative_prompts}
 
-        for i, data in enumerate(train_loader):
-            ecg, targets = data
+        ecg, targets = train_loader.dataset[:]
 
-            ecg = ecg.to(device)
+        ecg = ecg.to(device)
+        
+        # Get the target labels
+        target_labels = [self.label_map[target.item()] for target in targets]
 
-            # Get the ecg embeddings
-            with torch.no_grad():
-                ecg_embeddings = ecg_model(ecg)
+        # Get the ecg embeddings
+        with torch.no_grad():
+            ecg_embeddings = ecg_model(ecg)
 
-            # Get the target labels
-            target_labels = [self.label_map[target.item()] for target in targets]
+        results = {}
+        
+        # Perform the zero-shot classification. Performed once for every possible class
+        for target_class in self.label_map.values():
+            correct = 0
+            y_true = []
+            y_pred = []
+            y_scores = []
+            positive_embedding = positive_embeddings[self.fill_sentence(positive_prompt, target_class)]
+            negative_embedding = negative_embeddings[self.fill_sentence(negative_prompt, target_class)]
             
-            # Fill in the positive and negative prompts with the target labels
-            positive_prompts = [self.fill_sentence(positive_prompt, target_label) for target_label in target_labels]
-            negative_prompts = [self.fill_sentence(negative_prompt, target_label) for target_label in target_labels]
-
-            # Make pairs of an ECG sample, and the corresponding positive and negative text prompt embeddings
-            for i in range(len(target_labels)):
-                pairs = {"target_label" : target_labels[i], "ecg_sample" : ecg_embeddings[i], "positive_embedding" : positive_embeddings[positive_prompts[i]], "negative_embedding" : negative_embeddings[negative_prompts[i]]}
-            
-            # Perform the zero-shot classification
-            for i, target_label in enumerate(target_labels):
+            for i, label in enumerate(target_labels):
                 ecg_sample = ecg_embeddings[i]
-                positive_embedding = positive_embeddings[positive_prompts[i]]
-                negative_embedding = negative_embeddings[negative_prompts[i]]
-
-                # Calculate the cosine similarity between the ECG sample and the positive and negative text embeddings
                 positive_similarity = F.cosine_similarity(ecg_sample, positive_embedding)
                 negative_similarity = F.cosine_similarity(ecg_sample, negative_embedding)
 
-                # Determine the predicted label based on the similarity scores
-                if positive_similarity > negative_similarity:
-                    predicted_label = "Positive"
+                predicted_label = positive_similarity > negative_similarity
+                    
+                # Check if the predicted label was correct
+                """if predicted_label:
+                    if label == target_class:
+                        correct += 1
                 else:
-                    predicted_label = "Negative"
+                    if label != target_class:
+                        correct += 1"""
+                if (predicted_label and label == target_class) or (not predicted_label and label != target_class):
+                    correct += 1
                 
-                print(predicted_label, target_label)
+                y_true.append(1 if label == target_class else 0)
+                y_pred.append(1 if predicted_label else 0)
+                y_scores.append(positive_similarity.item())
+            
+            accuracy = (correct / len(target_labels)) * 100
+            f1 = f1_score(y_true, y_pred)
+            auc = roc_auc_score(y_true, y_scores) if len(set(y_true)) > 1 else float('nan')
 
-                # TODO: This right now searches for the label every time. Instead, change so that one class is picked for an entire run, so EVERY prompt is fx. "NORM" or "not NORM", and then predict whether or not the ecg sample actually is. Right now this does essentially nothing.
-
-            break
+            results[target_class] = {
+                "accuracy": accuracy,
+                "f1_score": f1 * 100,
+                "auc_score": auc * 100
+            }
+            print(f"Class {target_class} - Accuracy: {accuracy:.2f}%, F1 Score: {f1:.4f}, AUC Score: {auc:.4f}")
+        
+        results["average"] = {
+            "accuracy": sum([result["accuracy"] for result in results.values()]) / len(results),
+            "f1_score": sum([result["f1_score"] for result in results.values()]) / len(results),
+            "auc_score": sum([result["auc_score"] for result in results.values()]) / len(results)
+        }
+        print(f"Average - Accuracy: {results['average']['accuracy']:.2f}%, F1 Score: {results['average']['f1_score']:.4f}, AUC Score: {results['average']['auc_score']:.4f}")
+                    
+        return results
