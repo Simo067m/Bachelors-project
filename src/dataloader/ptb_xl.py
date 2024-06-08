@@ -222,9 +222,10 @@ class ptb_xl_dataset(Dataset):
     It is used to load the data into a Pytorch DataLoader class.
     The data needs to be preprocessed before being loaded into this class.
     """
-    def __init__(self, type : str, path_to_data : str, include_text : bool = False):
+    def __init__(self, type : str, path_to_data : str, include_text : bool = False, include_targets : bool = True):
 
         self.include_text = include_text
+        self.include_targets = include_targets
 
         self.data = pd.read_csv(path_to_data+"saved_splits/"+type+"_data.csv")
         self.ecg_data = torch.load(path_to_data+"saved_splits/"+type+"_ecg.pt").clone().detach().permute(0, 2, 1)
@@ -233,8 +234,9 @@ class ptb_xl_dataset(Dataset):
             for line in f:
                 self.text_data.append(line.strip())
 
-        self.y = self.data.diagnostic_superclass
-        self.y_tensor, self.y_tensor_one_hot = self.y_to_tensors(self.y)
+        if self.include_targets:
+            self.y = self.data.diagnostic_superclass
+            self.y_tensor, self.y_tensor_one_hot = self.y_to_tensors(self.y)
 
     def y_to_tensors(self, y):
         """
@@ -260,20 +262,26 @@ class ptb_xl_dataset(Dataset):
         # This function only returns the ECG data and the target, since the text encoder does not require training
         #return (self.X_ecg_tensor[idx], self.X_text[idx]), self.y_train_tensor[idx]
         if self.include_text:
-            return self.ecg_data[idx], self.text_data[idx], self.y_tensor[idx]
+            if self.include_targets:
+                return self.ecg_data[idx], self.text_data[idx], self.y_tensor[idx]
+            else:
+                return self.ecg_data[idx], self.text_data[idx]
         else:
-            return self.ecg_data[idx], self.y_tensor[idx]
+            if self.include_targets:
+                return self.ecg_data[idx], self.y_tensor[idx]
+            else:
+                return self.ecg_data[idx], self.y_tensor[idx]
     
-def ptb_xl_data_generator(configs, split_method : str = "pre_split", use_translated : bool = True, load_raw_data : bool = False, use_extra_text_prompt : bool = False, sampling_rate : int = 100, include_text : bool = False):
+def ptb_xl_data_generator(configs, split_method : str = "pre_split", use_translated : bool = True, load_raw_data : bool = False, use_extra_text_prompt : bool = False, sampling_rate : int = 100, include_text : bool = False, include_targets : bool = True):
     """
     Generates the DataLoader objects for the PTB-XL dataset.
     """
     # Preprocess the data
     preprocessed = ptb_xl_processor(configs.path_to_dataset, use_translated=use_translated, split_method=split_method, sampling_rate = sampling_rate, load_raw=load_raw_data, use_extra_text_prompt=use_extra_text_prompt)
     # Load the data into the dataset
-    train_dataset = ptb_xl_dataset("train", configs.path_to_dataset, include_text=include_text)
-    val_dataset = ptb_xl_dataset("val", configs.path_to_dataset, include_text=include_text)
-    test_dataset = ptb_xl_dataset("test", configs.path_to_dataset, include_text=include_text)
+    train_dataset = ptb_xl_dataset("train", configs.path_to_dataset, include_text=include_text, include_targets=include_targets)
+    val_dataset = ptb_xl_dataset("val", configs.path_to_dataset, include_text=include_text, include_targets=include_targets)
+    test_dataset = ptb_xl_dataset("test", configs.path_to_dataset, include_text=include_text, include_targets=include_targets)
     # Load the data into a DataLoader
     train_loader = DataLoader(train_dataset, batch_size=configs.batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(val_dataset, batch_size=configs.batch_size, shuffle=True, drop_last=True)

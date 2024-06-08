@@ -98,7 +98,8 @@ if __name__ == "__main__":
 
         # Define dataset variables
         if args.run_config["task"] == "ECG_pre_training":
-            train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, use_translated=True, load_raw_data=args.load_raw_data, include_text=True, use_extra_text_prompt=args.use_standard_text_prompt)
+            train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, use_translated=True, load_raw_data=args.load_raw_data,
+                                                                          include_text=True, use_extra_text_prompt=args.use_standard_text_prompt, include_targets=False)
         else:
             train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, use_translated=True, load_raw_data=args.load_raw_data)
         
