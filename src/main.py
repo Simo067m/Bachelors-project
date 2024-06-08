@@ -8,7 +8,7 @@ import datetime
 from dataloader.ptb_xl import ptb_xl_data_generator
 from models.clinical_bert import bio_clinical_BERT
 from models.resnet import ResNet, ResidualBlock
-from models.resnet2D import ModifiedResNet1D
+from models.resnet_clip import ModifiedResNet1D
 from models.linear_classifier import LinearClassifier
 from train_eval.trainer import Trainer
 from train_eval.loss import NT_Xent_loss
