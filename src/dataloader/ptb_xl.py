@@ -99,7 +99,7 @@ class ptb_xl_processor():
                 X_text = [line.strip() for line in X_text]
             X_text = np.array(X_text)
             if self.use_extra_text_prompt:
-                X_text = [self.fill_sentence("The report of the ECG is that {}", report) for report in X_text]
+                X_text = np.array([self.fill_sentence("The report of the ECG is that {}", report) for report in X_text])
 
         # Split into train and test using pytorch instead of the provided test_fold
         # Splits are chosen based on the split used in "Adversarial Spatiotemporal Contrastive Learning for Electrocardiogram Signals" (https://ieeexplore.ieee.org/document/10177892) Table 1.
