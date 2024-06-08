@@ -77,7 +77,7 @@ class ptb_xl_processor():
             X_ecg, X_text = self.load_raw_data(Y)
 
             # Standardize the ecg data
-            X_ecg = self.min_max_scale(X_ecg)
+            X_ecg = self.min_max_scale(torch.tensor(X_ecg))
 
             Y.to_csv("Datasets/ptb-xl/saved_splits/data.csv", index=False)
             torch.save(torch.tensor(X_ecg, dtype=torch.float32), "Datasets/ptb-xl/saved_splits/ecg_data.pt")

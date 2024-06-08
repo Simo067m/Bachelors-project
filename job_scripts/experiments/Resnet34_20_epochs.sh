@@ -5,7 +5,7 @@
 # Name the job
 #BSUB -J ResNet34_20_epochs
 # Ask for memory
-#BSUB -R "rusage[mem=2GB]"
+#BSUB -R "rusage[mem=4GB]"
 # Add walltime
 #BSUB -W 12:00
 # Add number of cores
