@@ -130,8 +130,6 @@ class ResNet(nn.Module):
             self.name = "ResNet-152"
         else:
             raise ValueError("The number of layers must be either 18 or 34.")
-        
-        self.linear_proj = EcgLinearProjectionHead(512 * self.expansion)
 
         # Define the "stem" convolutional layer before the residual layers
         self.in_channels = 64 # in_channels defined by the paper, which can be modified for each layer by multiplication
@@ -152,6 +150,7 @@ class ResNet(nn.Module):
 
         # Define the fully connected layer
         #self.fc = nn.Linear(512 * self.expansion, num_classes)
+        self.linear_proj = EcgLinearProjectionHead(512 * self.expansion)
 
     def _make_layer(self, block, out_channels : int, blocks : int, stride : int = 1):
             downsample = None # Initialize the downsampling layer as None

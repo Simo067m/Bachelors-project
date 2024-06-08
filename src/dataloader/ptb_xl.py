@@ -229,6 +229,7 @@ class ptb_xl_dataset(Dataset):
 
         self.data = pd.read_csv(path_to_data+"saved_splits/"+type+"_data.csv")
         self.ecg_data = torch.load(path_to_data+"saved_splits/"+type+"_ecg.pt").clone().detach().permute(0, 2, 1)
+        self.ecg_data = self.ecg_data.float()
         self.text_data = []
         with open(path_to_data+"saved_splits/"+type+"_text.txt", "r") as f:
             for line in f:
