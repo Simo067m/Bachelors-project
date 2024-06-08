@@ -26,6 +26,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Representation learning of multimodal data using multiview machine learning')
 
     parser.add_argument("-load_raw_data", action="store_true", default=False, help="Load raw data")
+    parser.add_argument("-use_standard_text_prompt", action="store_true", default=False, help="Use standard text prompt")
 
     data_split_method = parser.add_mutually_exclusive_group()
     data_split_method.add_argument("-pre-split", action="store_const", help="Use pre-split data", dest="data_split_method", const="pre_split")
@@ -40,9 +41,11 @@ def parse_args():
     ecg_model.add_argument("-resnet18", action="store_const", help="ResNet18 model", dest="ecg_model", const="resnet18")
     ecg_model.add_argument("-resnet34", action="store_const", help="ResNet34 model", dest="ecg_model", const="resnet34")
     ecg_model.add_argument("-resnet18-bottleneck", action="store_const", help="ResNet18 with bottleneck model", dest="ecg_model", const="resnet18-bottleneck")
+    ecg_model.add_argument("-resnet34-bottleneck", action="store_const", help="ResNet34 with bottleneck model", dest="ecg_model", const="resnet34-bottleneck")
 
     parser.add_argument("-log-wandb", action="store_true", default=False, help="Log data to wandb", dest="log_wandb")
     parser.add_argument("-wandb-project", type=str, help="Wandb project name")
+    parser.add_argument("-wandb-name", type=str, help="Wandb run name")
 
     parser.add_argument("-run-config", nargs="+", action=StoreDictKeyPair, metavar="KEY=VALUE", help="Run configurations", dest="run_config") # Use this like: -run_config param1=value1 param2=value2
     
@@ -95,11 +98,10 @@ if __name__ == "__main__":
 
         # Define dataset variables
         if args.run_config["task"] == "ECG_pre_training":
-            train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, use_translated=True, load_raw_data=args.load_raw_data, include_text=True)
+            train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, use_translated=True, load_raw_data=args.load_raw_data, include_text=True, use_extra_text_prompt=args.use_standard_text_prompt)
         else:
             train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, use_translated=True, load_raw_data=args.load_raw_data)
         
-    
     # Load the text model
         
     if args.text_model == "bioclinicalbert":
@@ -135,13 +137,19 @@ if __name__ == "__main__":
 
         # Define ECG model variables
         ecg_model = ModifiedResNet1D(layers=[2, 2, 2, 2], output_dim=configs.num_classes, heads=8, input_resolution=1000, width=64).to(device)
+    
+    elif args.ecg_model == "resnet34-bottleneck":
+        ecg_model_name = "ResNet-34-BottleNeck"
+
+        # Define ECG model variables
+        ecg_model = ModifiedResNet1D(layers=[3, 4, 6, 3], output_dim=configs.num_classes, heads=8, input_resolution=1000, width=64).to(device)
 
     # Specify the wandb configurations
     if args.log_wandb:
         import wandb
         wandb.init(
             project=args.wandb_project,
-            name=f"{args.run_config['task']}_ECG_{ecg_model_name}_Text_{text_model_name}_{dataset_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}",
+            name=args.wandb_name,
             config={
                 "learning_rate" : configs.learning_rate,
                 "weight_decay" : configs.weight_decay,

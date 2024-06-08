@@ -25,7 +25,8 @@ class ptb_xl_processor():
     - X_test_text (list): Testing text data
     - y_test (list): Testing targets
     """
-    def __init__(self, path_to_dataset : str, use_translated : bool, sampling_rate : int = 100, split_method : str = "pre_split", test_fold : int = 10, val_fold : int = 9, load_raw : bool = False, load_meta : bool = False, single_label : bool = True):
+    def __init__(self, path_to_dataset : str, use_translated : bool, use_extra_text_prompt : bool = False, sampling_rate : int = 100, split_method : str = "pre_split",
+                 test_fold : int = 10, val_fold : int = 9, load_raw : bool = False, load_meta : bool = False, single_label : bool = True):
         """
         Initializes a class instance, and loads the dataset. No function calls are necessary.
 
@@ -43,6 +44,8 @@ class ptb_xl_processor():
         self.sampling_rate = sampling_rate
         self.load_raw = load_raw
         self.use_translated = use_translated
+        self.use_extra_text_prompt = use_extra_text_prompt
+
 
         if load_meta:
             self.meta = pd.read_csv(self.path_to_dataset+'ptbxl_database.csv', index_col='ecg_id')
@@ -81,7 +84,7 @@ class ptb_xl_processor():
         
         else:
             if self.use_translated:
-                Y = pd.read_csv(self.path_to_dataset + "saved_splits/data_translated.csv")
+                Y = pd.read_csv(self.path_to_dataset + "saved_splits/data_translated_unconfirmed_removed.csv")
                 with open(self.path_to_dataset + "saved_splits/text_reports.txt", "w") as f:
                     for report in Y["translated_report"]:
                         f.write(report + "\n")
@@ -95,6 +98,8 @@ class ptb_xl_processor():
                 X_text = f.readlines()
                 X_text = [line.strip() for line in X_text]
             X_text = np.array(X_text)
+            if self.use_extra_text_prompt:
+                X_text = [self.fill_sentence("The report of the ECG is that {}", report) for report in X_text]
 
         # Split into train and test using pytorch instead of the provided test_fold
         # Splits are chosen based on the split used in "Adversarial Spatiotemporal Contrastive Learning for Electrocardiogram Signals" (https://ieeexplore.ieee.org/document/10177892) Table 1.
@@ -195,6 +200,21 @@ class ptb_xl_processor():
         val_indices, test_indices = next(val_test_split.split(data.iloc[test_indices], targets.iloc[test_indices]))
 
         return train_indices, val_indices, test_indices
+    
+    def fill_sentence(self, prompt : str, word_to_fill : str):
+        """
+        Replaces the placeholders in the template string with the provided words.
+        
+        Parameters:
+            template_string (str): The template string with placeholders.
+            word (list): A list of words to fill in the placeholders.
+            
+        Returns:
+            str: The filled-in string.
+        """
+        filled_string = prompt.format(word_to_fill)
+    
+        return filled_string
 
 class ptb_xl_dataset(Dataset):
     """
@@ -244,12 +264,12 @@ class ptb_xl_dataset(Dataset):
         else:
             return self.ecg_data[idx], self.y_tensor[idx]
     
-def ptb_xl_data_generator(configs, split_method : str = "pre_split", use_translated : bool = True, load_raw_data : bool = False, sampling_rate : int = 100, include_text : bool = False):
+def ptb_xl_data_generator(configs, split_method : str = "pre_split", use_translated : bool = True, load_raw_data : bool = False, use_extra_text_prompt : bool = False, sampling_rate : int = 100, include_text : bool = False):
     """
     Generates the DataLoader objects for the PTB-XL dataset.
     """
     # Preprocess the data
-    preprocessed = ptb_xl_processor(configs.path_to_dataset, use_translated=use_translated, split_method=split_method, sampling_rate = sampling_rate, load_raw=load_raw_data)
+    preprocessed = ptb_xl_processor(configs.path_to_dataset, use_translated=use_translated, split_method=split_method, sampling_rate = sampling_rate, load_raw=load_raw_data, use_extra_text_prompt=use_extra_text_prompt)
     # Load the data into the dataset
     train_dataset = ptb_xl_dataset("train", configs.path_to_dataset, include_text=include_text)
     val_dataset = ptb_xl_dataset("val", configs.path_to_dataset, include_text=include_text)
