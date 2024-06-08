@@ -1,0 +1,16 @@
+bsub < job_scripts/experiments/Resnet18_20_epochs_prompt.sh
+bsub < job_scripts/experiments/Resnet18_20_epochs.sh
+bsub < job_scripts/experiments/Resnet18_50_epochs_prompt.sh
+bsub < job_scripts/experiments/Resnet18_50_epochs.sh
+bsub < job_scripts/experiments/Resnet18_clip_20_epochs_prompt.sh
+bsub < job_scripts/experiments/Resnet18_clip_20_epochs.sh
+bsub < job_scripts/experiments/Resnet18_clip_50_epochs_prompt.sh
+bsub < job_scripts/experiments/Resnet18_clip_50_epochs.sh
+bsub < job_scripts/experiments/Resnet34_20_epochs_prompt.sh
+bsub < job_scripts/experiments/Resnet34_20_epochs.sh
+bsub < job_scripts/experiments/Resnet34_50_epochs_prompt.sh
+bsub < job_scripts/experiments/Resnet34_50_epochs.sh
+bsub < job_scripts/experiments/Resnet34_clip_20_epochs_prompt.sh
+bsub < job_scripts/experiments/Resnet34_clip_20_epochs.sh
+bsub < job_scripts/experiments/Resnet34_clip_50_epochs_prompt.sh
+bsub < job_scripts/experiments/Resnet34_clip_50_epochs.sh
