@@ -69,10 +69,9 @@ class Trainer:
             running_avg_negative_similarity = 0.0
             running_avg_positive_similarity = 0.0
             for i, data in enumerate(train_loader):
-                ecg, text, target = data
+                ecg, text = data
 
                 ecg = ecg.to(device)
-                target = target.to(device)
 
                 optimizer.zero_grad()
 
@@ -106,10 +105,9 @@ class Trainer:
             val_running_avg_positive_similarity = 0.0
             with torch.no_grad():
                 for i, data in enumerate(val_loader):
-                    ecg, text, target = data
+                    ecg, text = data
 
                     ecg = ecg.to(device)
-                    target = target.to(device)
 
                     ecg_output = ecg_model(ecg)
                     text_output = text_model(text).to(device)  # Get text embeddings
@@ -166,7 +164,7 @@ class Trainer:
 
         with torch.no_grad():
             for i, data in enumerate(test_loader):
-                ecg, text, target = data
+                ecg, text = data
                 ecg = ecg.to(device)
                 
                 ecg_output = ecg_model(ecg)
