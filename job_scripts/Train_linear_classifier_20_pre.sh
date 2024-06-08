@@ -27,4 +27,4 @@ module load cuda/12.1
 source bachelor-venv/bin/activate
 
 # Run the script
-python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18 -log-wandb -wandb-project Bachelors-project -run-config task=train_linear_classifier epochs=50 save_name=Linear_classifier_Resnet18_20_epochs pre_trained_ecg_model=Resnet18_pre_trained batch-size=32
+python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18 -log-wandb -wandb-project Bachelors-project -run-config task=train_linear_classifier epochs=50 save_name=Linear_classifier_Resnet18_20_epochs pre_trained_ecg_model=Resnet18_pre_trained_20_epochs batch-size=32
