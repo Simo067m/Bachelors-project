@@ -101,9 +101,6 @@ class Trainer():
                 avg_negative_similarity, avg_positive_similarity = check_sims(train_loader.batch_size, ecg_output, text_output)
                 running_avg_negative_similarity += avg_negative_similarity
                 running_avg_positive_similarity += avg_positive_similarity
-                print(text)
-                import sys
-                sys.exit()
                 
             avg_loss = running_loss / len(train_loader)
             losses.append(avg_loss)
