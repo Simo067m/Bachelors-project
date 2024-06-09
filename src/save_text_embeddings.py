@@ -22,6 +22,8 @@ configs = Configs(128)
 
 text_data = pd.read_csv(configs.path_to_dataset+"saved_splits/data_translated_unconfirmed_removed.csv")["translated_report"].tolist()
 text_data_prompt = [fill_sentence("The report of the ECG is that {}", text) for text in text_data]
+text_data = [line.strip() for line in text_data]
+text_data_prompt = [line.strip() for line in text_data_prompt]
 
 model = bio_clinical_BERT()
 
