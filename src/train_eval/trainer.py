@@ -83,11 +83,13 @@ class Trainer():
                 ecg_output = ecg_model(ecg)
 
                 # Get text embeddings
-                text_output = []
-                for text_input in text:
-                    text_output.append(text_embeddings[text_input])
-                text_output = torch.stack(text_output).to(device)
-                text_output = text_output.squeeze(1)
+                with torch.no_grad():
+                    text_output = text_model(text).to(device)
+                #text_output = []
+                #for text_input in text:
+                #    text_output.append(text_embeddings[text_input])
+                #text_output = torch.stack(text_output).to(device)
+                #text_output = text_output.squeeze(1)
 
                 loss = criterion(ecg_output, text_output)
 
@@ -99,6 +101,9 @@ class Trainer():
                 avg_negative_similarity, avg_positive_similarity = check_sims(train_loader.batch_size, ecg_output, text_output)
                 running_avg_negative_similarity += avg_negative_similarity
                 running_avg_positive_similarity += avg_positive_similarity
+                print(text)
+                import sys
+                sys.exit()
                 
             avg_loss = running_loss / len(train_loader)
             losses.append(avg_loss)
@@ -120,11 +125,13 @@ class Trainer():
 
                     ecg_output = ecg_model(ecg)
                     # Get text embeddings
-                    text_output = []
-                    for text_input in text:
-                        text_output.append(text_embeddings[text_input])
-                    text_output = torch.stack(text_output).to(device)
-                    text_output = text_output.squeeze(1)
+                    with torch.no_grad():
+                        text_output = text_model(text).to(device)
+                    #text_output = []
+                    #for text_input in text:
+                    #    text_output.append(text_embeddings[text_input])
+                    #text_output = torch.stack(text_output).to(device)
+                    #text_output = text_output.squeeze(1)
 
                     val_loss = criterion(ecg_output, text_output)
                     val_running_loss += val_loss.item()
