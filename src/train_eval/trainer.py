@@ -87,6 +87,7 @@ class Trainer():
                 for text_input in text:
                     text_output.append(text_embeddings[text_input])
                 text_output = torch.stack(text_output).to(device)
+                text_output = text_output.squeeze(1)
 
                 loss = criterion(ecg_output, text_output)
 
@@ -123,6 +124,7 @@ class Trainer():
                     for text_input in text:
                         text_output.append(text_embeddings[text_input])
                     text_output = torch.stack(text_output).to(device)
+                    text_output = text_output.squeeze(1)
 
                     val_loss = criterion(ecg_output, text_output)
                     val_running_loss += val_loss.item()
