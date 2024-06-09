@@ -25,4 +25,4 @@ module load cuda/12.1
 source bachelor-venv/bin/activate
 
 # Run the script
-python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18-bottleneck -log-wandb -use_standard_text_prompt -load_raw_data -wandb-project Bachelors-project -wandb-name ResNet18_clip_50_epochs_prompt -run-config task=ECG_pre_training epochs=50 save_name=ResNet18_clip_50_epochs_prompt batch-size=128
+python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18-bottleneck -log-wandb -use_standard_text_prompt -wandb-project Bachelors-project -wandb-name ResNet18_clip_50_epochs_prompt -run-config task=ECG_pre_training epochs=50 save_name=ResNet18_clip_50_epochs_prompt batch-size=128
