@@ -131,9 +131,12 @@ class ptb_xl_processor():
         with open(self.path_to_dataset + "saved_splits/test_text.txt", "w") as f:
             for report in self.test_text:
                 f.write(report + "\n")
-        torch.save(self.train_ecg.clone().detach(), self.path_to_dataset + "saved_splits/train_ecg.pt")
-        torch.save(self.val_ecg.clone().detach(), self.path_to_dataset + "saved_splits/val_ecg.pt")
-        torch.save(self.test_ecg.clone().detach(), self.path_to_dataset + "saved_splits/test_ecg.pt")
+        self.train_ecg = torch.from_numpy(self.train_ecg)
+        self.val_ecg = torch.from_numpy(self.val_ecg)
+        self.test_ecg = torch.from_numpy(self.test_ecg)
+        torch.save(self.train_ecg, self.path_to_dataset + "saved_splits/train_ecg.pt")
+        torch.save(self.val_ecg, self.path_to_dataset + "saved_splits/val_ecg.pt")
+        torch.save(self.test_ecg, self.path_to_dataset + "saved_splits/test_ecg.pt")
 
     def load_raw_data(self, df : pd.DataFrame):
         """
