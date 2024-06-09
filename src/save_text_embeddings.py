@@ -29,6 +29,8 @@ text_embeddings = {}
 text_embeddings_prompt = {}
 
 for text in text_data:
+    if text == " ":
+         text_embeddings[text] = model("empty")
     if text not in text_embeddings:
         embedding = model(text)
         text_embeddings[text] = embedding
