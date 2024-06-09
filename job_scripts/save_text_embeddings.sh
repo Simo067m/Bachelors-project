@@ -7,13 +7,13 @@
 # -- specify that we need 4GB of memory per core/slot --
 # so when asking for 4 cores, we are really asking for 4*4GB=16GB of memory 
 # for this job. 
-#BSUB -R "rusage[mem=1GB]"
+#BSUB -R "rusage[mem=4GB]"
 # -- Output File --
 #BSUB -o save_text_embeddings.out
 # -- estimated wall clock time (execution time): hh:mm -- 
 #BSUB -W 02:00 
 # -- Number of cores requested -- 
-#BSUB -n 1 
+#BSUB -n 4
 # -- Specify the distribution of the cores: on a single node --
 #BSUB -R "span[hosts=1]"
 # -- end of LSF options -
