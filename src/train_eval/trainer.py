@@ -15,12 +15,12 @@ from utils.utils import check_sims
 from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
 import torch.nn.functional as F
 
-class Trainer:
+class Trainer():
     """
     Class to train and evaluate torch.nn models.
     """
-    def __init__(self):
-        pass
+    def __init__(self, configs):
+        self.configs = configs
 
     def log_ecg_pre_train_metrics(self, epoch, train_loss, val_loss, avg_train_positive_similarity, avg_train_negative_similarity, avg_val_positive_similarity, avg_val_negative_similarity):
         metrics = {
@@ -49,7 +49,7 @@ class Trainer:
 
         wandb.log(metrics, step=epoch)
 
-    def ecg_encoder_pre_train(self, ecg_model, text_model, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_name = None):
+    def ecg_encoder_pre_train(self, ecg_model, text_model, train_loader, val_loader, num_epochs, optimizer, criterion, device, save_name = None, use_extra_prompt : bool = False):
         """
         Pre-trains the ecg encoder.
         Only the ecg model weights are trained, as the pre-trained text model weights are frozen.
@@ -64,6 +64,11 @@ class Trainer:
         ecg_model.train()
         text_model.eval() # Text model is frozen
 
+        if use_extra_prompt:
+            text_embeddings = torch.load(self.configs.path_to_dataset+"saved_splits/text_embeddings_prompt.pt")
+        else:
+            text_embeddings = torch.load(self.configs.path_to_dataset+"saved_splits/text_embeddings.pt")
+
         for epoch in range(num_epochs):
             running_loss = 0.0
             running_avg_negative_similarity = 0.0
@@ -77,8 +82,11 @@ class Trainer:
 
                 ecg_output = ecg_model(ecg)
 
-                with torch.no_grad():  # Ensure the text model does not backpropagate gradients
-                    text_output = text_model(text).to(device)  # Get text embeddings
+                # Get text embeddings
+                text_output = []
+                for text_input in text:
+                    text_output.append(text_embeddings[text_input])
+                text_output = torch.stack(text_output).to(device)
 
                 loss = criterion(ecg_output, text_output)
 
@@ -110,7 +118,11 @@ class Trainer:
                     ecg = ecg.to(device)
 
                     ecg_output = ecg_model(ecg)
-                    text_output = text_model(text).to(device)  # Get text embeddings
+                    # Get text embeddings
+                    text_output = []
+                    for text_input in text:
+                        text_output.append(text_embeddings[text_input])
+                    text_output = torch.stack(text_output).to(device)
 
                     val_loss = criterion(ecg_output, text_output)
                     val_running_loss += val_loss.item()
@@ -152,7 +164,7 @@ class Trainer:
         
         return losses, val_losses, avg_negative_similarities, avg_positive_similarities, val_avg_negative_similarities, val_avg_positive_similarities
 
-    def evaluate_ecg_encoder(self, ecg_model, text_model, test_loader, device):
+    def evaluate_ecg_encoder(self, ecg_model, text_model, test_loader, device, use_extra_prompt = False):
         """
         Evaluates the ECG encoder by comparing its embeddings with text embeddings.
         """
@@ -162,13 +174,22 @@ class Trainer:
         running_avg_negative_similarity = 0.0
         running_avg_positive_similarity = 0.0
 
+        if use_extra_prompt:
+            text_embeddings = torch.load(self.configs.path_to_dataset+"saved_splits/text_embeddings_prompt.pt")
+        else:
+            text_embeddings = torch.load(self.configs.path_to_dataset+"saved_splits/text_embeddings.pt")
+
         with torch.no_grad():
             for i, data in enumerate(test_loader):
                 ecg, text = data
                 ecg = ecg.to(device)
                 
                 ecg_output = ecg_model(ecg)
-                text_output = text_model(text).to(device)
+                # Get text embeddings
+                text_output = []
+                for text_input in text:
+                    text_output.append(text_embeddings[text_input])
+                text_output = torch.stack(text_output).to(device)
 
                 avg_negative_similarity, avg_positive_similarity = check_sims(test_loader.batch_size, ecg_output, text_output)
                 running_avg_negative_similarity += avg_negative_similarity

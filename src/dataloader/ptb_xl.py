@@ -26,7 +26,7 @@ class ptb_xl_processor():
     - y_test (list): Testing targets
     """
     def __init__(self, path_to_dataset : str, use_translated : bool, use_extra_text_prompt : bool = False, sampling_rate : int = 100, split_method : str = "pre_split",
-                 test_fold : int = 10, val_fold : int = 9, load_raw : bool = False, load_meta : bool = False, single_label : bool = False):
+                 test_fold : int = 10, val_fold : int = 9, load_raw : bool = False, load_meta : bool = False, single_label : bool = True):
         """
         Initializes a class instance, and loads the dataset. No function calls are necessary.
 

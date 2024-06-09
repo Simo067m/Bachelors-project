@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
     # Run the task
 
-    trainer = Trainer()
+    trainer = Trainer(configs)
 
     if args.run_config["task"] == "ECG_pre_training":
         print(f"Running ECG pre-training for {args.run_config['epochs']} epochs.")
@@ -189,10 +189,10 @@ if __name__ == "__main__":
 
         # Train the model
         losses, val_losses, avg_negative_similarities, avg_positive_similarities, val_avg_negative_similarities, val_avg_positive_similarities = trainer.ecg_encoder_pre_train(ecg_model, text_model, 
-                                                            train_loader, val_loader, int(args.run_config["epochs"]), optimizer, criterion, device, save_name = args.run_config["save_name"])
+                                                            train_loader, val_loader, int(args.run_config["epochs"]), optimizer, criterion, device, save_name = args.run_config["save_name"], use_extra_prompt=args.use_standard_text_prompt)
 
         # Evaluate the model
-        test_avg_negative_similarity, test_avg_positive_similarity = trainer.evaluate_ecg_encoder(ecg_model, text_model, test_loader, device)
+        test_avg_negative_similarity, test_avg_positive_similarity = trainer.evaluate_ecg_encoder(ecg_model, text_model, test_loader, device, use_extra_prompt=args.use_standard_text_prompt)
 
         # Save the run returns
         run_returns = {
