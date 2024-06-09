@@ -77,7 +77,7 @@ class ptb_xl_processor():
             X_ecg, X_text = self.load_raw_data(Y)
 
             # Standardize the ecg data
-            X_ecg = self.min_max_scale(torch.tensor(X_ecg))
+            #X_ecg = self.min_max_scale(torch.tensor(X_ecg))
 
             Y.to_csv("Datasets/ptb-xl/saved_splits/data.csv", index=False)
             torch.save(torch.tensor(X_ecg, dtype=torch.float32), "Datasets/ptb-xl/saved_splits/ecg_data.pt")
@@ -94,7 +94,6 @@ class ptb_xl_processor():
                     for report in Y["report"]:
                         f.write(report + "\n")
             X_ecg = torch.load(self.path_to_dataset + "saved_splits/ecg_data.pt")
-            X_ecg = self.min_max_scale(X_ecg)
             with open(self.path_to_dataset + "saved_splits/text_reports.txt", "r") as f:
                 X_text = f.readlines()
                 X_text = [line.strip() for line in X_text]
@@ -230,6 +229,7 @@ class ptb_xl_dataset(Dataset):
 
         self.data = pd.read_csv(path_to_data+"saved_splits/"+type+"_data.csv")
         self.ecg_data = torch.load(path_to_data+"saved_splits/"+type+"_ecg.pt").clone().detach().permute(0, 2, 1)
+        self.ecg_data = self.min_max_scale(self.ecg_data)
         self.ecg_data = self.ecg_data.float()
         self.text_data = []
         with open(path_to_data+"saved_splits/"+type+"_text.txt", "r") as f:
@@ -254,6 +254,21 @@ class ptb_xl_dataset(Dataset):
         y_tensor_one_hot = torch.nn.functional.one_hot(torch.tensor(indices))
 
         return y_tensor, y_tensor_one_hot
+    
+    def min_max_scale(self, data : torch.Tensor):
+        """
+        Scales the data to be between 0 and 1 for each signal independently.
+        
+        Parameters:
+        data (torch.Tensor): The input data to scale.
+        
+        Returns:
+        torch.Tensor: The scaled data.
+        """
+        min_val, _ = data.min(dim=2, keepdim=True)
+        max_val, _ = data.max(dim=2, keepdim=True)
+        scaled_data = (data - min_val) / (max_val - min_val)
+        return scaled_data
     
     def __len__(self):
         # Required function for PyTorch Dataset

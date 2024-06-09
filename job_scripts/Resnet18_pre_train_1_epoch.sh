@@ -26,4 +26,4 @@ module load cuda/12.1
 source bachelor-venv/bin/activate
 
 # Run the script
-python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18 -log-wandb -wandb-project Bachelors-project -run-config task=ECG_pre_training epochs=1 save_name=Resnet18_pre_trained
+python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18 -load_raw_data -run-config task=ECG_pre_training epochs=1
