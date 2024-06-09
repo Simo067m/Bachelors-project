@@ -94,6 +94,7 @@ class ptb_xl_processor():
                     for report in Y["report"]:
                         f.write(report + "\n")
             X_ecg = torch.load(self.path_to_dataset + "saved_splits/ecg_data.pt")
+            X_ecg = self.min_max_scale(X_ecg)
             with open(self.path_to_dataset + "saved_splits/text_reports.txt", "r") as f:
                 X_text = f.readlines()
                 X_text = [line.strip() for line in X_text]
