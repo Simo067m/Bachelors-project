@@ -28,12 +28,12 @@ model = bio_clinical_BERT()
 text_embeddings = {}
 text_embeddings_prompt = {}
 
-for text in text_data[:3]:
+for text in text_data:
     if text not in text_embeddings:
         embedding = model(text)
         text_embeddings[text] = embedding
 
-for text in text_data_prompt[:3]:
+for text in text_data_prompt:
     if text not in text_embeddings_prompt:
         embedding = model(text)
         text_embeddings_prompt[text] = embedding
