@@ -57,7 +57,7 @@ class BottleNeck(nn.Module):
         self.expansion = expansion # Expansion is 4 for ResNet50, ResNet101, and ResNet152
 
         # Define the layers of the bottleneck block
-        self.conv1 = nn.Conv1d(in_channels, in_channels, kernel_size=1, stride=stride, padding=1, bias=False)
+        self.conv1 = nn.Conv1d(in_channels, in_channels, kernel_size=1, stride=stride, bias=False)
         self.bn1 = nn.BatchNorm1d(in_channels)
         self.relu1 = nn.ReLU(inplace=True)
 

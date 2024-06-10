@@ -3,7 +3,7 @@
 #BSUB -q gpuv100
 #BSUB -gpu "num=1:mode=exclusive_process"
 # Name the job
-#BSUB -J ResNet34_clip_50_epochs
+#BSUB -J ResNet34_bottleneck_50_epochs_prompt
 # Ask for memory
 #BSUB -R "rusage[mem=4GB]"
 # Add walltime
@@ -13,7 +13,7 @@
 # Specify number of hosts
 #BSUB -R "span[hosts=1]"
 # Name output file
-#BSUB -o ResNet34_clip_50_epochs.out
+#BSUB -o ResNet34_bottleneck_50_epochs_prompt.out
 
 # Load python module
 module load python3/3.11.7
@@ -25,4 +25,4 @@ module load cuda/12.1
 source bachelor-venv/bin/activate
 
 # Run the script
-python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet34-bottleneck -log-wandb -wandb-project Bachelors-project -wandb-name ResNet34_clip_50_epochs -run-config task=ECG_pre_training epochs=50 save_name=ResNet34_clip_50_epochs batch-size=128
+python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet34-bottleneck -log-wandb -use_standard_text_prompt -wandb-project Bachelors-project -wandb-name ResNet34_bottleneck_50_epochs_prompt -run-config task=ECG_pre_training epochs=50 save_name=ResNet34_bottleneck_50_epochs_prompt batch-size=128

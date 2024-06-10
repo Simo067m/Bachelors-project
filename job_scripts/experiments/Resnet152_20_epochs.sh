@@ -3,7 +3,7 @@
 #BSUB -q gpuv100
 #BSUB -gpu "num=1:mode=exclusive_process"
 # Name the job
-#BSUB -J ResNet18_clip_20_epochs
+#BSUB -J ResNet152_20_epochs
 # Ask for memory
 #BSUB -R "rusage[mem=4GB]"
 # Add walltime
@@ -13,7 +13,7 @@
 # Specify number of hosts
 #BSUB -R "span[hosts=1]"
 # Name output file
-#BSUB -o ResNet18_clip_20_epochs.out
+#BSUB -o ResNet152_20_epochs.out
 
 # Load python module
 module load python3/3.11.7
@@ -25,4 +25,4 @@ module load cuda/12.1
 source bachelor-venv/bin/activate
 
 # Run the script
-python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18-bottleneck -log-wandb -wandb-project Bachelors-project -wandb-name ResNet18_clip_20_epochs -run-config task=ECG_pre_training epochs=20 save_name=ResNet18_clip_20_epochs batch-size=128
+python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet152 -log-wandb -wandb-project Bachelors-project -wandb-name ResNet152_20_epochs -run-config task=ECG_pre_training epochs=20 save_name=ResNet152_20_epochs batch-size=128

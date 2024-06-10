@@ -7,7 +7,7 @@ import datetime
 # Import custom modules
 from dataloader.ptb_xl import ptb_xl_data_generator
 from models.clinical_bert import bio_clinical_BERT
-from models.resnet import ResNet, ResidualBlock
+from models.resnet import ResNet, ResidualBlock, BottleNeck
 from models.resnet_clip import ModifiedResNet1D
 from models.linear_classifier import LinearClassifier
 from train_eval.trainer import Trainer
@@ -40,6 +40,9 @@ def parse_args():
     ecg_model = parser.add_mutually_exclusive_group()
     ecg_model.add_argument("-resnet18", action="store_const", help="ResNet18 model", dest="ecg_model", const="resnet18")
     ecg_model.add_argument("-resnet34", action="store_const", help="ResNet34 model", dest="ecg_model", const="resnet34")
+    ecg_model.add_argument("-resnet50", action="store_const", help="ResNet50 model", dest="ecg_model", const="resnet50")
+    ecg_model.add_argument("-resnet101", action="store_const", help="ResNet101 model", dest="ecg_model", const="resnet101")
+    ecg_model.add_argument("-resnet152", action="store_const", help="ResNet152 model", dest="ecg_model", const="resnet152")
     ecg_model.add_argument("-resnet18-bottleneck", action="store_const", help="ResNet18 with bottleneck model", dest="ecg_model", const="resnet18-bottleneck")
     ecg_model.add_argument("-resnet34-bottleneck", action="store_const", help="ResNet34 with bottleneck model", dest="ecg_model", const="resnet34-bottleneck")
 
@@ -144,6 +147,24 @@ if __name__ == "__main__":
 
         # Define ECG model variables
         ecg_model = ModifiedResNet1D(layers=[3, 4, 6, 3], output_dim=configs.num_classes, heads=8, input_resolution=1000, width=64).to(device)
+    
+    elif args.ecg_model == "resnet50":
+        ecg_model_name = "ResNet-50"
+        
+        # Define ECG model variables
+        ecg_model = ResNet(configs.in_channels, configs.num_classes, 50, BottleNeck).to(device)
+    
+    elif args.ecg_model == "resnet101":
+        ecg_model_name = "ResNet-101"
+        
+        # Define ECG model variables
+        ecg_model = ResNet(configs.in_channels, configs.num_classes, 101, BottleNeck).to(device)
+    
+    elif args.ecg_model == "resnet152":
+        ecg_model_name = "ResNet-152"
+        
+        # Define ECG model variables
+        ecg_model = ResNet(configs.in_channels, configs.num_classes, 152, BottleNeck).to(device)
 
     # Specify the wandb configurations
     if args.log_wandb:
