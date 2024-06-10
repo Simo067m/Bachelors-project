@@ -192,10 +192,8 @@ class Trainer():
                 
                 ecg_output = ecg_model(ecg)
                 # Get text embeddings
-                text_output = []
-                for text_input in text:
-                    text_output.append(text_embeddings[text_input])
-                text_output = torch.stack(text_output).to(device)
+                with torch.no_grad():
+                    text_output = text_model(text).to(device)
 
                 avg_negative_similarity, avg_positive_similarity = check_sims(test_loader.batch_size, ecg_output, text_output)
                 running_avg_negative_similarity += avg_negative_similarity
