@@ -167,4 +167,4 @@ sweep_config["parameters"] = parameters_dict
 
 sweep_id = wandb.sweep(sweep_config, project="Bachelors-project")
 
-wandb.agent(sweep_id, function=train, count=2)
+wandb.agent(sweep_id, function=train, count=50)
