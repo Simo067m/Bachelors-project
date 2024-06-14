@@ -121,7 +121,7 @@ def train():
         configs = Configs(config.batch_size)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         ecg_model = ResNet(configs.in_channels, configs.num_classes, 18, ResidualBlock).to(device)
-        ecg_model.load_state_dict(torch.load(os.path.join(os.getcwd(), "saved_models/ResNet18_20_epochs.pt")))
+        ecg_model.load_state_dict(torch.load(os.path.join(os.getcwd(), "saved_models/ResNet18_20_epochs")))
         ecg_model.eval()
         classifier = LinearClassifier(configs).to(device)
         criterion = torch.nn.CrossEntropyLoss()
