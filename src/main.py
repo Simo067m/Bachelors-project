@@ -268,7 +268,7 @@ if __name__ == "__main__":
                       "ResNet152_20_epochs" : ResNet(configs.in_channels, configs.num_classes, 152, BottleNeck).to(device)
                       }
         # TODO: Make it so it makes it the correct model and then loads the state dict
-        for model_name, ecg_model in ecg_models:
+        for model_name, ecg_model in ecg_models.items():
             print(f"Linear evaluation for {model_name}.")
 
             ecg_model.load_state_dict(torch.load(os.path.join(os.getcwd(), "saved_models", f"{model_name}")))
