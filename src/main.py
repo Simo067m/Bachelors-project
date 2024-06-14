@@ -252,4 +252,44 @@ if __name__ == "__main__":
         # Evaluate the model
         accuracy, f1_score = trainer.test_linear_classifier(ecg_model, classifier, test_loader, device)
 
+    elif args.run_config["task"] == "classifier_evaluation":
+        print(f"Performing linear evaluation.")
+        
+        ecg_models = {"ResNet18_20_epochs" : ResNet(configs.in_channels, configs.num_classes, 18, ResidualBlock).to(device), 
+                      "ResNet18_20_epochs_prompt" : ResNet(configs.in_channels, configs.num_classes, 18, ResidualBlock).to(device), 
+                      "ResNet18_50_epochs" : ResNet(configs.in_channels, configs.num_classes, 18, ResidualBlock).to(device), 
+                      "ResNet18_50_epochs_prompt" : ResNet(configs.in_channels, configs.num_classes, 18, ResidualBlock).to(device),
+                      "ResNet34_20_epochs" : ResNet(configs.in_channels, configs.num_classes, 34, ResidualBlock).to(device), 
+                      "ResNet34_20_epochs_prompt" : ResNet(configs.in_channels, configs.num_classes, 34, ResidualBlock).to(device), 
+                      "ResNet34_50_epochs" : ResNet(configs.in_channels, configs.num_classes, 34, ResidualBlock).to(device), 
+                      "ResNet34_50_epochs_prompt" : ResNet(configs.in_channels, configs.num_classes, 34, ResidualBlock).to(device),
+                      "ResNet50_20_epochs" : ResNet(configs.in_channels, configs.num_classes, 50, BottleNeck).to(device), 
+                      "ResNet101_20_epochs" : ResNet(configs.in_channels, configs.num_classes, 101, BottleNeck).to(device), 
+                      "ResNet152_20_epochs" : ResNet(configs.in_channels, configs.num_classes, 152, BottleNeck).to(device)
+                      }
+        # TODO: Make it so it makes it the correct model and then loads the state dict
+        for model_name, ecg_model in ecg_models:
+            print(f"Linear evaluation for {model_name}.")
+
+            ecg_model.load_state_dict(torch.load(os.path.join(os.getcwd(), "saved_models", f"{model_name}")))
+
+            criterion = torch.nn.CrossEntropyLoss()
+
+            mean_accuracy, std_accuracy, mean_f1, std_f1, mean_auc, std_auc = trainer.classifier_train_test(configs, ecg_model, LinearClassifier, train_loader, val_loader, test_loader,
+                                          int(args.run_config["epochs"]), criterion, device, 10)
+            
+            run_metrics = {
+                "mean_accuracy" : mean_accuracy,
+                "std_accuracy" : std_accuracy,
+                "mean_f1" : mean_f1,
+                "std_f1" : std_f1,
+                "mean_auc" : mean_auc,
+                "std_auc" : std_auc
+            }
+
+            if not os.path.exists(os.path.join(os.getcwd(), "linear_evaluation_returns")):
+                os.makedirs(os.path.join(os.getcwd(), "linear_evaluation_returns"))
+        
+        torch.save(run_metrics, os.path.join(os.getcwd(), "linear_evaluation_returns", f"{model_name}_linear_evaluation_returns.pt"))
+
     print("Done!")

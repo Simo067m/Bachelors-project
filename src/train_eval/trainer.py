@@ -396,7 +396,7 @@ class Trainer():
             print(f"Model {i + 1}")
             new_classifier = classifier(configs).to(device)
 
-            optimizer = torch.optim.Adam(new_classifier.parameters())
+            optimizer = torch.optim.Adam(new_classifier.parameters(), lr=0.001)
             
             losses, val_losses = self.train_linear_classifier(ecg_model, new_classifier, train_loader, val_loader, num_epochs, optimizer, criterion, device)
 
@@ -417,3 +417,5 @@ class Trainer():
         print(f"Mean Accuracy: {mean_accuracy:.4f} ± {std_accuracy:.4f}")
         print(f"Mean F1 Score: {mean_f1:.4f} ± {std_f1:.4f}")
         print(f"Mean AUC Score: {mean_auc:.4f} ± {std_auc:.4f}")
+
+        return mean_accuracy, std_accuracy, mean_f1, std_f1, mean_auc, std_auc
