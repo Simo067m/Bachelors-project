@@ -117,12 +117,10 @@ def train():
         
         config = wandb.config
 
-        #configs = Configs(config.batch_size)
-        configs = TestingConfigs()
+        configs = Configs(config.batch_size)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         ecg_model = ResNet(configs.in_channels, configs.num_classes, 18, ResidualBlock).to(device)
-        #ecg_model.load_state_dict(torch.load("saved_models/ResNet18_20_epochs.pt"))
-        ecg_model.load_state_dict(torch.load("C:/Users/ssjsi/Documents/Bachelors-project/saved_models/Resnet18_pre_trained"))
+        ecg_model.load_state_dict(torch.load("saved_models/ResNet18_20_epochs.pt"))
         ecg_model.eval()
         classifier = LinearClassifier(configs).to(device)
         criterion = torch.nn.CrossEntropyLoss()
