@@ -151,15 +151,11 @@ parameters_dict = {
     },
     "batch_size": {
         "values": [32, 64, 96, 128]
-    }
-}
-
-parameters_dict.update({
-    "epochs":
-    {
+    },
+    "epochs": {
         "values": [10, 20, 30, 40, 50]
     }
-})
+}
 
 sweep_config["parameters"] = parameters_dict
 
