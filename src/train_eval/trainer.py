@@ -325,7 +325,7 @@ class Trainer():
 
         return accuracy, f1
 
-    def test_linear_classifier_new(self, ecg_model, classifier, test_loader, device):
+    def test_linear_classifier_new(self, ecg_model, classifier, test_loader, device, save_name = None):
         """
         Tests the linear classifier.
         """
@@ -365,4 +365,55 @@ class Trainer():
         print(f"F1 Score: {f1:.4f}")
         print(f"AUC Score: {auc:.4f}")
 
+        if save_name is not None:
+            metrics = {
+                "Accuracy" : accuracy,
+                "F1 Score" : f1,
+                "AUC Score" : auc
+            }
+            wandb.log(metrics)
+
         return accuracy, f1, auc
+
+    def get_std_accuracy(self, accuracy_values):
+        std = np.std(accuracy_values, ddof=1)
+        mean_accuracy = np.mean(accuracy_values)
+        return mean_accuracy, std
+    
+    def classifier_train_test(self, configs, ecg_model, classifier, train_loader, val_loader, test_loader, num_epochs, criterion, device, num_models, save_name = None):
+        """
+        Trains and tests the linear classifier.
+        Saves the model with the best test accuracy.
+        Used for sweeping and averaging results.
+        """
+        accuracy_values = []
+        f1_values = []
+        auc_values = []
+        losses = []
+        val_losses = []
+        
+        for i in range(num_models):
+            print(f"Model {i + 1}")
+            new_classifier = classifier(configs).to(device)
+
+            optimizer = torch.optim.Adam(new_classifier.parameters())
+            
+            losses, val_losses = self.train_linear_classifier(ecg_model, new_classifier, train_loader, val_loader, num_epochs, optimizer, criterion, device)
+
+            accuracy, f1, auc = self.test_linear_classifier_new(ecg_model, new_classifier, test_loader, device, save_name)
+            accuracy_values.append(accuracy)
+            f1_values.append(f1)
+            auc_values.append(auc)
+
+            if save_name is not None:
+                if accuracy == max(accuracy_values):
+                    save_path = os.path.join(os.getcwd(), "saved_models", save_name)
+                    torch.save(new_classifier.state_dict(), save_path)
+                    print(f"Model saved at {save_path}.")
+        
+        mean_accuracy, std_accuracy = self.get_std_accuracy(accuracy_values)
+        mean_f1, std_f1 = self.get_std_accuracy(f1_values)
+        mean_auc, std_auc = self.get_std_accuracy(auc_values)
+        print(f"Mean Accuracy: {mean_accuracy:.4f} ± {std_accuracy:.4f}")
+        print(f"Mean F1 Score: {mean_f1:.4f} ± {std_f1:.4f}")
+        print(f"Mean AUC Score: {mean_auc:.4f} ± {std_auc:.4f}")
