@@ -25,4 +25,4 @@ module load cuda/12.1
 source bachelor-venv/bin/activate
 
 # Run the script
-python3 -u src/main.py -pre-split -ptb-xl -bioclinicalbert -resnet18 -run-config task=classifier_evaluation epochs=20 batch-size=128
+python3 -u src/main.py -pre-split -ptb -bioclinicalbert -resnet18 -run-config task=classifier_evaluation epochs=20 batch-size=128

@@ -6,6 +6,7 @@ import datetime
 
 # Import custom modules
 from dataloader.ptb_xl import ptb_xl_data_generator
+from dataloader.ptb import ptb_data_generator
 from models.clinical_bert import bio_clinical_BERT
 from models.resnet import ResNet, ResidualBlock, BottleNeck
 from models.resnet_clip import ModifiedResNet1D
@@ -33,6 +34,7 @@ def parse_args():
     
     dataset = parser.add_mutually_exclusive_group()
     dataset.add_argument("-ptb-xl", action="store_const", help="PTB-XL dataset", dest="dataset", const="ptb-xl")
+    dataset.add_argument("-ptb", action="store_const", help="PTB dataset", dest="dataset", const="pbt")
 
     text_model = parser.add_mutually_exclusive_group()
     text_model.add_argument("-bioclinicalbert", action="store_const", help="BioClinicalBERT model", dest="text_model", const="bioclinicalbert")
@@ -105,6 +107,15 @@ if __name__ == "__main__":
                                                                           include_text=True, use_extra_text_prompt=args.use_standard_text_prompt, include_targets=False)
         else:
             train_loader, val_loader, test_loader = ptb_xl_data_generator(configs, split_method=args.data_split_method, use_translated=True, load_raw_data=args.load_raw_data)
+    
+    elif args.dataset == "ptb":
+        dataset_name = "PTB"
+
+        # Import configs
+        from configs.ptb_configs import Configs as ptb_data_configs
+        configs = ptb_data_configs(int(args.run_config["batch-size"]))
+
+        train_loader, val_loader, test_loader = ptb_data_generator(configs)
         
     # Load the text model
         
