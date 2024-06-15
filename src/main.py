@@ -34,7 +34,7 @@ def parse_args():
     
     dataset = parser.add_mutually_exclusive_group()
     dataset.add_argument("-ptb-xl", action="store_const", help="PTB-XL dataset", dest="dataset", const="ptb-xl")
-    dataset.add_argument("-ptb", action="store_const", help="PTB dataset", dest="dataset", const="pbt")
+    dataset.add_argument("-ptb", action="store_const", help="PTB dataset", dest="dataset", const="ptb")
 
     text_model = parser.add_mutually_exclusive_group()
     text_model.add_argument("-bioclinicalbert", action="store_const", help="BioClinicalBERT model", dest="text_model", const="bioclinicalbert")
